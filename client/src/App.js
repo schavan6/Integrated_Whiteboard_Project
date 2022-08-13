@@ -58,27 +58,8 @@ const App = () => {
   }, []);
 
   useEffect(() => {
-    socket.on('userIsJoined', (data) => {
-      if (data.success) {
-        console.log('userJoined');
-        setUsers(data.users);
-      } else {
-        console.log('userJoined error');
-      }
-    });
-
     socket.on('allUsers', (data) => {
       setUsers(data);
-    });
-
-    socket.on('userJoinedMessageBroadcasted', (data) => {
-      console.log(`${data} joined the room`);
-      //toast.info(`${data} joined the room`);
-    });
-
-    socket.on('userLeftMessageBroadcasted', (data) => {
-      console.log(`${data} left the room`);
-      //toast.info(`${data} left the room`);
     });
   }, []);
 

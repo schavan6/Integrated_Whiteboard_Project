@@ -36,9 +36,8 @@ io.on('connection', (socket) => {
       presenter,
       socketId: socket.id
     });
-    socket.emit('userIsJoined', { success: true, users });
     socket.broadcast.to(roomId).emit('userJoinedMessageBroadcasted', name);
-    socket.broadcast.to(roomId).emit('allUsers', users);
+    io.to(roomId).emit('allUsers', users);
     socket.broadcast.to(roomId).emit('whiteBoardDataResponse', {
       imgURL: imgURLGlobal
     });

@@ -79,7 +79,11 @@ const RoomPage = ({ user, socket, users }) => {
           </button>
           <div className="w-100 mt-5 pt-5">
             {users.map((usr, index) => (
-              <p key={index * 999} className="my-2 text-center w-100 ">
+              <p
+                key={index * 999}
+                id={usr.socketId}
+                className="my-2 text-center w-100 "
+              >
                 {usr.name} {user && user.userId === usr.userId && '(You)'}
               </p>
             ))}
