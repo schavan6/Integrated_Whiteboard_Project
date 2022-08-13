@@ -1,10 +1,12 @@
 import { useEffect, useState, useLayoutEffect } from 'react';
-//import rough from 'roughjs';
+import { connect } from 'react-redux';
+import PropTypes from 'prop-types';
 import rough from 'roughjs/bundled/rough.cjs';
 
 const roughGenerator = rough.generator();
 
 const WhiteBoard = ({
+  auth,
   canvasRef,
   ctxRef,
   elements,
@@ -12,7 +14,8 @@ const WhiteBoard = ({
   tool,
   color,
   user,
-  socket
+  socket,
+  connectToSelf
 }) => {
   const [img, setImg] = useState(null);
 
@@ -40,6 +43,16 @@ const WhiteBoard = ({
   }, []);
 
   useEffect(() => {
+    if (canvasRef && canvasRef.current) {
+      const canvas = canvasRef.current;
+      canvas.height = window.innerHeight * 2;
+      canvas.width = window.innerWidth * 2;
+      drawElements();
+      console.log(connectToSelf);
+    }
+  }, [connectToSelf]);
+
+  useEffect(() => {
     if (ctxRef && ctxRef.current) {
       ctxRef.current.strokeStyle = color;
     }
@@ -47,7 +60,6 @@ const WhiteBoard = ({
 
   useLayoutEffect(() => {
     if (canvasRef && canvasRef.current) {
-      console.log(canvasRef.current);
       const roughCanvas = rough.canvas(canvasRef.current);
 
       if (elements.length > 0) {
@@ -97,10 +109,65 @@ const WhiteBoard = ({
         }
       });
 
-      const canvasImage = canvasRef.current.toDataURL();
-      socket.emit('whiteboardData', canvasImage);
+      if (auth.user && auth.user.role === 'Instructor') {
+        const canvasImage = canvasRef.current.toDataURL();
+        socket.emit('whiteboardData', canvasImage);
+      }
     }
   }, [elements]);
+
+  const drawElements = () => {
+    if (canvasRef && canvasRef.current) {
+      const roughCanvas = rough.canvas(canvasRef.current);
+
+      if (elements.length > 0) {
+        ctxRef.current.clearRect(
+          0,
+          0,
+          canvasRef.current.width,
+          canvasRef.current.height
+        );
+      }
+
+      elements.forEach((element) => {
+        if (element.type === 'rect') {
+          roughCanvas.draw(
+            roughGenerator.rectangle(
+              element.offsetX,
+              element.offsetY,
+              element.width,
+              element.height,
+              {
+                stroke: element.stroke,
+                strokeWidth: 5,
+                roughness: 0
+              }
+            )
+          );
+        } else if (element.type === 'line') {
+          roughCanvas.draw(
+            roughGenerator.line(
+              element.offsetX,
+              element.offsetY,
+              element.width,
+              element.height,
+              {
+                stroke: element.stroke,
+                strokeWidth: 5,
+                roughness: 0
+              }
+            )
+          );
+        } else if (element.type === 'pencil') {
+          roughCanvas.linearPath(element.path, {
+            stroke: element.stroke,
+            strokeWidth: 5,
+            roughness: 0
+          });
+        }
+      });
+    }
+  };
 
   const handleMouseDown = (e) => {
     const { offsetX, offsetY } = e.nativeEvent;
@@ -200,7 +267,7 @@ const WhiteBoard = ({
     setIsDrawing(false);
   };
 
-  if (!user?.presenter) {
+  if (!connectToSelf) {
     return (
       <div className="border border-dark border-3 h-100 w-100 overflow-hidden">
         <img
@@ -228,4 +295,12 @@ const WhiteBoard = ({
   );
 };
 
-export default WhiteBoard;
+WhiteBoard.propTypes = {
+  auth: PropTypes.object.isRequired
+};
+
+const mapStateToProps = (state) => ({
+  auth: state.auth
+});
+
+export default connect(mapStateToProps)(WhiteBoard);

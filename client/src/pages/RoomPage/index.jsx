@@ -1,11 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { connect } from 'react-redux';
 import PropTypes from 'prop-types';
-import List from '@mui/material/List';
-import ListItem from '@mui/material/ListItem';
-import ListItemIcon from '@mui/material/ListItemIcon';
-import ListItemText from '@mui/material/ListItemText';
-import MailIcon from '@mui/icons-material/Mail';
 
 import './index.css';
 
@@ -20,7 +15,14 @@ const RoomPage = ({ auth, user, socket, users }) => {
   const [elements, setElements] = useState([]);
   const [history, setHistory] = useState([]);
   const [openedUserTab, setOpenedUserTab] = useState(false);
-  const [openedChatTab, setOpenedChatTab] = useState(false);
+  const [connectToSelf, setConnectToSelf] = useState(true);
+
+  useEffect(() => {
+    if (auth.user && auth.user.role === 'Student') {
+      setConnectToSelf(false);
+    }
+  }, []);
+
   const handleClearCanvas = () => {
     const canvas = canvasRef.current;
     const ctx = canvas.getContext('2d');
@@ -48,7 +50,12 @@ const RoomPage = ({ auth, user, socket, users }) => {
   };
 
   const onItemClick = (key) => {
-    console.log(key);
+    if (key == 'me') {
+      console.log(key);
+      setConnectToSelf(true);
+    } else {
+      setConnectToSelf(false);
+    }
   };
 
   return (
@@ -221,6 +228,7 @@ const RoomPage = ({ auth, user, socket, users }) => {
           tool={tool}
           user={user}
           socket={socket}
+          connectToSelf={connectToSelf}
         />
       </div>
     </div>

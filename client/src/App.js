@@ -98,28 +98,19 @@ const App = () => {
             <Route
               path="/forms"
               element={
-                <PrivateRoute
-                  component={() => (
-                    <Forms uuid={uuid} socket={socket} setUser={setUser} />
-                  )}
-                />
+                <PrivateRoute>
+                  <Forms uuid={uuid} socket={socket} setUser={setUser} />
+                </PrivateRoute>
               }
             />
             <Route
               path="/:roomId"
               element={
-                <PrivateRoute
-                  component={() => (
-                    <RoomPage user={user} socket={socket} users={users} />
-                  )}
-                />
+                <PrivateRoute>
+                  <RoomPage user={user} socket={socket} users={users} />
+                </PrivateRoute>
               }
             />
-
-            {/*<Route
-              path="dashboard"
-              element={<PrivateRoute component={Dashboard} />}
-  />*/}
             <Route
               path="create-profile"
               element={<PrivateRoute component={ProfileForm} />}
