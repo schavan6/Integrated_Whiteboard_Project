@@ -1,11 +1,17 @@
 import { useState, useRef, useEffect } from 'react';
+import { connect } from 'react-redux';
+import PropTypes from 'prop-types';
+import List from '@mui/material/List';
+import ListItem from '@mui/material/ListItem';
+import ListItemIcon from '@mui/material/ListItemIcon';
+import ListItemText from '@mui/material/ListItemText';
+import MailIcon from '@mui/icons-material/Mail';
 
 import './index.css';
 
 import WhiteBoard from '../../components/Whiteboard';
-import Chat from '../../components/ChatBar';
 
-const RoomPage = ({ user, socket, users }) => {
+const RoomPage = ({ auth, user, socket, users }) => {
   const canvasRef = useRef(null);
   const ctxRef = useRef(null);
 
@@ -41,6 +47,10 @@ const RoomPage = ({ user, socket, users }) => {
     setHistory((prevHistory) => prevHistory.slice(0, prevHistory.length - 1));
   };
 
+  const onItemClick = (key) => {
+    console.log(key);
+  };
+
   return (
     <div className="row">
       <div className="row">
@@ -73,21 +83,51 @@ const RoomPage = ({ user, socket, users }) => {
           <button
             type="button"
             onClick={() => setOpenedUserTab(false)}
-            className="btn btn-light btn-block w-100 mt-5"
+            className="btn btn-primary btn-block w-100 mt-5"
           >
             Close
           </button>
-          <div className="w-100 mt-5 pt-5">
-            {users.map((usr, index) => (
-              <p
-                key={index * 999}
-                id={usr.socketId}
-                className="my-2 text-center w-100 "
+          {auth.user.role === 'Instructor' ? (
+            <div className="w-100 mt-5 pt-5">
+              {users.map((usr, index) => (
+                <button
+                  type="button"
+                  key={usr.socketId}
+                  id={usr.socketId}
+                  className="btn btn-light btn-block w-100 mt-5"
+                  onClick={() => onItemClick(usr.socketId)}
+                >
+                  {' '}
+                  <span>
+                    {usr.name +
+                      ' ' +
+                      (user && user.userId === usr.userId ? '(You)' : '')}
+                  </span>
+                </button>
+              ))}
+            </div>
+          ) : (
+            <div className="w-100 mt-5 pt-5">
+              <button
+                type="button"
+                key="instructor"
+                id="instructor"
+                className="btn btn-light btn-block w-100 mt-5"
+                onClick={() => onItemClick('instructor')}
               >
-                {usr.name} {user && user.userId === usr.userId && '(You)'}
-              </p>
-            ))}
-          </div>
+                Instructor
+              </button>
+              <button
+                type="button"
+                key="me"
+                id="me"
+                className="btn btn-light btn-block w-100 mt-5"
+                onClick={() => onItemClick('me')}
+              >
+                Me
+              </button>
+            </div>
+          )}
         </div>
       )}
 
@@ -187,4 +227,12 @@ const RoomPage = ({ user, socket, users }) => {
   );
 };
 
-export default RoomPage;
+RoomPage.propTypes = {
+  auth: PropTypes.object.isRequired
+};
+
+const mapStateToProps = (state) => ({
+  auth: state.auth
+});
+
+export default connect(mapStateToProps)(RoomPage);
