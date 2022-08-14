@@ -18,10 +18,17 @@ const WhiteBoard = ({
   connectToSelf
 }) => {
   const [img, setImg] = useState(null);
+  const [isEmitting, setIsEmitting] = useState(false);
 
   useEffect(() => {
     socket.on('whiteBoardDataResponse', (data) => {
       setImg(data.imgURL);
+    });
+
+    socket.on('connect-to-instructor', (data) => {
+      setIsEmitting(true);
+      const canvasImage = canvasRef.current.toDataURL();
+      socket.emit('whiteboardData', canvasImage);
     });
   }, []);
 
@@ -48,7 +55,6 @@ const WhiteBoard = ({
       canvas.height = window.innerHeight * 2;
       canvas.width = window.innerWidth * 2;
       drawElements();
-      console.log(connectToSelf);
     }
   }, [connectToSelf]);
 
@@ -109,7 +115,7 @@ const WhiteBoard = ({
         }
       });
 
-      if (auth.user && auth.user.role === 'Instructor') {
+      if ((auth.user && auth.user.role === 'Instructor') || isEmitting) {
         const canvasImage = canvasRef.current.toDataURL();
         socket.emit('whiteboardData', canvasImage);
       }

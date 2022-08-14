@@ -51,10 +51,14 @@ const RoomPage = ({ auth, user, socket, users }) => {
 
   const onItemClick = (key) => {
     if (key == 'me') {
-      console.log(key);
       setConnectToSelf(true);
     } else {
-      setConnectToSelf(false);
+      if (socket.id === key) {
+        setConnectToSelf(true);
+      } else {
+        socket.emit('connect-to-student', key);
+        setConnectToSelf(false);
+      }
     }
   };
 

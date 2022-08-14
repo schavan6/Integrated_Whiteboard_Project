@@ -18,7 +18,6 @@ import { LOGOUT } from './actions/types';
 import Forms from './components/Forms';
 import RoomPage from './pages/RoomPage';
 
-//import { toast, ToastContainer } from 'react-toastify';
 import io from 'socket.io-client';
 
 // Redux

@@ -32,7 +32,7 @@ io.on('connection', (socket) => {
     });
     socket.broadcast.to(roomId).emit('userJoinedMessageBroadcasted', name);
     io.to(roomId).emit('allUsers', users);
-    socket.broadcast.to(roomId).emit('whiteBoardDataResponse', {
+    io.to(roomId).emit('whiteBoardDataResponse', {
       imgURL: imgURLGlobal
     });
   });
@@ -42,6 +42,10 @@ io.on('connection', (socket) => {
     socket.broadcast.to(roomIdGlobal).emit('whiteBoardDataResponse', {
       imgURL: data
     });
+  });
+
+  socket.on('connect-to-student', (data) => {
+    socket.to(data).emit('connect-to-instructor');
   });
 
   socket.on('message', (data) => {
