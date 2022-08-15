@@ -11,6 +11,8 @@ const WhiteBoard = ({
   ctxRef,
   elements,
   setElements,
+  otherElements,
+  setOtherElements,
   tool,
   color,
   user,
@@ -19,18 +21,46 @@ const WhiteBoard = ({
 }) => {
   const [img, setImg] = useState(null);
   const [isEmitting, setIsEmitting] = useState(false);
+  const [receiver, setReceiver] = useState('all');
 
   useEffect(() => {
+    socket.removeListener('whiteBoardDataResponse');
     socket.on('whiteBoardDataResponse', (data) => {
-      setImg(data.imgURL);
+      if (auth.user.role === 'Student' || !connectToSelf) {
+        setImg(data.imgURL);
+      }
+
+      if (
+        (auth.user.role === 'Instructor' && !connectToSelf) ||
+        (auth.user.role === 'Student' && connectToSelf)
+      ) {
+        console.log('TV Writing Data from event ', data.imgURL);
+        drawImageOnCanvas(data.imgURL);
+      }
     });
 
+    socket.removeListener('connect-to-instructor');
     socket.on('connect-to-instructor', (data) => {
       setIsEmitting(true);
-      const canvasImage = canvasRef.current.toDataURL();
-      socket.emit('whiteboardData', canvasImage);
+      if (canvasRef && canvasRef.current) {
+        const canvasImage = canvasRef.current.toDataURL();
+        socket.emit('whiteboardData', canvasImage);
+      }
     });
-  }, []);
+  }, [connectToSelf]);
+
+  const drawImageOnCanvas = (url) => {
+    if (ctxRef && ctxRef.current) {
+      var image = new Image();
+
+      //console.log('TV Redraw Canvas ');
+      image.onload = function () {
+        console.log('TV Redraw Canvas onload ', image.src);
+        ctxRef.current.drawImage(image, 0, 0);
+      };
+      image.src = url;
+    }
+  };
 
   const [isDrawing, setIsDrawing] = useState(false);
 
@@ -44,17 +74,23 @@ const WhiteBoard = ({
       ctx.strokeStyle = color;
       ctx.lineWidth = 2;
       ctx.lineCap = 'round';
-
+      console.log('TV CTX InIt', ctx);
       ctxRef.current = ctx;
     }
-  }, []);
+  }, [canvasRef?.current]);
 
   useEffect(() => {
     if (canvasRef && canvasRef.current) {
       const canvas = canvasRef.current;
       canvas.height = window.innerHeight * 2;
       canvas.width = window.innerWidth * 2;
+
       drawElements();
+
+      if (auth.user.role === 'Instructor' && connectToSelf === false) {
+        console.log('TV Writing Data from effect');
+        drawImageOnCanvas(img);
+      }
     }
   }, [connectToSelf]);
 
@@ -66,67 +102,31 @@ const WhiteBoard = ({
 
   useLayoutEffect(() => {
     if (canvasRef && canvasRef.current) {
-      const roughCanvas = rough.canvas(canvasRef.current);
-
-      if (elements.length > 0) {
-        ctxRef.current.clearRect(
-          0,
-          0,
-          canvasRef.current.width,
-          canvasRef.current.height
-        );
-      }
-
-      elements.forEach((element) => {
-        if (element.type === 'rect') {
-          roughCanvas.draw(
-            roughGenerator.rectangle(
-              element.offsetX,
-              element.offsetY,
-              element.width,
-              element.height,
-              {
-                stroke: element.stroke,
-                strokeWidth: 5,
-                roughness: 0
-              }
-            )
-          );
-        } else if (element.type === 'line') {
-          roughCanvas.draw(
-            roughGenerator.line(
-              element.offsetX,
-              element.offsetY,
-              element.width,
-              element.height,
-              {
-                stroke: element.stroke,
-                strokeWidth: 5,
-                roughness: 0
-              }
-            )
-          );
-        } else if (element.type === 'pencil') {
-          roughCanvas.linearPath(element.path, {
-            stroke: element.stroke,
-            strokeWidth: 5,
-            roughness: 0
-          });
-        }
-      });
+      drawElements();
 
       if ((auth.user && auth.user.role === 'Instructor') || isEmitting) {
         const canvasImage = canvasRef.current.toDataURL();
-        socket.emit('whiteboardData', canvasImage);
+        const data = { receiver, img: canvasImage };
+        console.log('TV Sending data ');
+        socket.emit('whiteboardData', data);
       }
     }
-  }, [elements]);
+  }, [elements, otherElements]);
 
   const drawElements = () => {
     if (canvasRef && canvasRef.current) {
       const roughCanvas = rough.canvas(canvasRef.current);
 
-      if (elements.length > 0) {
+      let elementsToDraw = [];
+
+      if (auth.user.role === 'Student' || connectToSelf === true) {
+        elementsToDraw = elements;
+      } else {
+        elementsToDraw = otherElements;
+      }
+
+      if (ctxRef && ctxRef.current) {
+        console.log('TV clearing canvas');
         ctxRef.current.clearRect(
           0,
           0,
@@ -135,7 +135,12 @@ const WhiteBoard = ({
         );
       }
 
-      elements.forEach((element) => {
+      if (auth.user.role === 'Instructor' && !connectToSelf) {
+        console.log('TV Writing Data from drawElements ');
+        drawImageOnCanvas(img);
+      }
+
+      elementsToDraw.forEach((element) => {
         if (element.type === 'rect') {
           roughCanvas.draw(
             roughGenerator.rectangle(
@@ -177,9 +182,12 @@ const WhiteBoard = ({
 
   const handleMouseDown = (e) => {
     const { offsetX, offsetY } = e.nativeEvent;
-
+    const setFunction =
+      auth.user.role === 'Student' || connectToSelf === true
+        ? setElements
+        : setOtherElements;
     if (tool === 'pencil') {
-      setElements((prevElements) => [
+      setFunction((prevElements) => [
         ...prevElements,
         {
           type: 'pencil',
@@ -190,7 +198,7 @@ const WhiteBoard = ({
         }
       ]);
     } else if (tool === 'line') {
-      setElements((prevElements) => [
+      setFunction((prevElements) => [
         ...prevElements,
         {
           type: 'line',
@@ -202,7 +210,7 @@ const WhiteBoard = ({
         }
       ]);
     } else if (tool === 'rect') {
-      setElements((prevElements) => [
+      setFunction((prevElements) => [
         ...prevElements,
         {
           type: 'rect',
@@ -221,13 +229,23 @@ const WhiteBoard = ({
   const handleMouseMove = (e) => {
     const { offsetX, offsetY } = e.nativeEvent;
 
+    const setFunction =
+      auth.user.role === 'Student' || connectToSelf === true
+        ? setElements
+        : setOtherElements;
+
+    const elementArray =
+      auth.user.role === 'Student' || connectToSelf === true
+        ? elements
+        : otherElements;
+
     if (isDrawing) {
       if (tool === 'pencil') {
-        const { path } = elements[elements.length - 1];
+        const { path } = elementArray[elementArray.length - 1];
         const newPath = [...path, [offsetX, offsetY]];
-        setElements((prevElements) =>
+        setFunction((prevElements) =>
           prevElements.map((ele, index) => {
-            if (index === elements.length - 1) {
+            if (index === elementArray.length - 1) {
               return {
                 ...ele,
                 path: newPath
@@ -238,9 +256,9 @@ const WhiteBoard = ({
           })
         );
       } else if (tool === 'line') {
-        setElements((prevElements) =>
+        setFunction((prevElements) =>
           prevElements.map((ele, index) => {
-            if (index === elements.length - 1) {
+            if (index === elementArray.length - 1) {
               return {
                 ...ele,
                 width: offsetX,
@@ -252,9 +270,9 @@ const WhiteBoard = ({
           })
         );
       } else if (tool === 'rect') {
-        setElements((prevElements) =>
+        setFunction((prevElements) =>
           prevElements.map((ele, index) => {
-            if (index === elements.length - 1) {
+            if (index === elementArray.length - 1) {
               return {
                 ...ele,
                 width: offsetX - ele.offsetX,
@@ -273,7 +291,7 @@ const WhiteBoard = ({
     setIsDrawing(false);
   };
 
-  if (!connectToSelf) {
+  if (!connectToSelf && auth.user.role === 'Student') {
     return (
       <div className="border border-dark border-3 h-100 w-100 overflow-hidden">
         <img

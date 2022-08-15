@@ -13,6 +13,7 @@ const RoomPage = ({ auth, user, socket, users }) => {
   const [tool, setTool] = useState('pencil');
   const [color, setColor] = useState('black');
   const [elements, setElements] = useState([]);
+  const [otherElements, setOtherElements] = useState([]);
   const [history, setHistory] = useState([]);
   const [openedUserTab, setOpenedUserTab] = useState(false);
   const [connectToSelf, setConnectToSelf] = useState(true);
@@ -49,15 +50,15 @@ const RoomPage = ({ auth, user, socket, users }) => {
     setHistory((prevHistory) => prevHistory.slice(0, prevHistory.length - 1));
   };
 
-  const onItemClick = (key) => {
+  const onItemClick = (key, socketId) => {
     if (key == 'me') {
       setConnectToSelf(true);
     } else {
-      if (socket.id === key) {
+      if (user.userId === key) {
         setConnectToSelf(true);
       } else {
-        socket.emit('connect-to-student', key);
         setConnectToSelf(false);
+        socket.emit('connect-to-student', socketId);
       }
     }
   };
@@ -106,7 +107,7 @@ const RoomPage = ({ auth, user, socket, users }) => {
                   key={usr.socketId}
                   id={usr.socketId}
                   className="btn btn-light btn-block w-100 mt-5"
-                  onClick={() => onItemClick(usr.socketId)}
+                  onClick={() => onItemClick(usr.userId, usr.socketId)}
                 >
                   {' '}
                   <span>
@@ -124,7 +125,7 @@ const RoomPage = ({ auth, user, socket, users }) => {
                 key="instructor"
                 id="instructor"
                 className="btn btn-light btn-block w-100 mt-5"
-                onClick={() => onItemClick('instructor')}
+                onClick={() => onItemClick('instructor', 'me')}
               >
                 Instructor
               </button>
@@ -133,7 +134,7 @@ const RoomPage = ({ auth, user, socket, users }) => {
                 key="me"
                 id="me"
                 className="btn btn-light btn-block w-100 mt-5"
-                onClick={() => onItemClick('me')}
+                onClick={() => onItemClick('me', 'me')}
               >
                 Me
               </button>
@@ -228,6 +229,8 @@ const RoomPage = ({ auth, user, socket, users }) => {
           ctxRef={ctxRef}
           elements={elements}
           setElements={setElements}
+          otherElements={otherElements}
+          setOtherElements={setOtherElements}
           color={color}
           tool={tool}
           user={user}

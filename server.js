@@ -38,9 +38,10 @@ io.on('connection', (socket) => {
   });
 
   socket.on('whiteboardData', (data) => {
-    imgURLGlobal = data;
+    imgURLGlobal = data.img;
+
     socket.broadcast.to(roomIdGlobal).emit('whiteBoardDataResponse', {
-      imgURL: data
+      imgURL: data.img
     });
   });
 
