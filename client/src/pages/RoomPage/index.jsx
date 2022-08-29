@@ -218,7 +218,7 @@ const RoomPage = ({ auth, user, socket, users }) => {
           </div>
           <div className="col-md-2">
             <button className="btn btn-danger" onClick={handleClearCanvas}>
-              Clear Canvas
+              Clear
             </button>
           </div>
         </div>
