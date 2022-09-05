@@ -1,28 +1,46 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import api from '../../../utils/api';
+import { useSelector } from 'react-redux';
+import axios from 'axios';
+import { resetWarningCache } from "prop-types";
 
-const CreateRoomForm = ({ uuid, socket, setUser }) => {
+ const CreateRoomForm = ({ uuid, socket, setUser }) => {
   const [roomId, setRoomId] = useState(uuid());
   const [name, setName] = useState("");
-
+  const user = useSelector((state) => state.auth.user)
   const navigate = useNavigate();
 
   const handleCreateRoom = (e) => {
     e.preventDefault();
 
-    // {name,roomId, userId, host, presenter}
-
     const roomData = {
-      name,
+      name: user.name,
       roomId,
-      userId: uuid(),
+      userId: user._id,
       host: true,
       presenter: true,
     };
-    setUser(roomData);
-    navigate(`/${roomId}`);
-    console.log(roomData);
-    socket.emit("userJoined", roomData);
+
+    const sessionData = {
+      hostname: user.name,
+      hostid: user._id,
+      sessionname: name
+    };
+
+    fetch("/api/sessions", {method: "POST", body: JSON.stringify(sessionData), headers: {
+      'Content-Type': 'application/json'} })
+      .then((res) => {
+        if (res.ok){
+            return res.json();
+        }
+    })
+    .then((jsonRes) => {
+        roomData.roomId = jsonRes
+        setUser(roomData);
+        navigate(`/${jsonRes}`);    
+        socket.emit("userJoined", roomData);
+    })
   };
 
   return (

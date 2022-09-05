@@ -9,40 +9,37 @@ const app = express();
 const server = require('http').createServer(app);
 const { Server } = require('socket.io');
 
-const { addUser, getUser, removeUser } = require('./utils/users');
+const { addUser, getUser, removeUser, getUsersInRoom } = require('./utils/users');
 
 const io = new Server(server);
 
 app.use(cors());
 
 let roomIdGlobal, imgURLGlobal;
-
+let userMap = new Map();
 io.on('connection', (socket) => {
   socket.on('userJoined', (data) => {
-    const { name, userId, roomId, host, presenter } = data;
+    const { name, userId, roomId, host, presenter, hostId} = data;
     roomIdGlobal = roomId;
     socket.join(roomId);
-    const users = addUser({
-      name,
-      userId,
-      roomId,
-      host,
-      presenter,
-      socketId: socket.id
-    });
-    socket.broadcast.to(roomId).emit('userJoinedMessageBroadcasted', name);
-    io.to(roomId).emit('allUsers', users);
-    io.to(roomId).emit('whiteBoardDataResponse', {
+    const users = addUser(data);
+    socket.emit("userIsJoined", {success: true, users});
+    socket.nsp.to(roomId).emit('allUsers', users);
+    socket.broadcast.to(roomId).emit('whiteBoardDataResponse', {
       imgURL: imgURLGlobal
     });
   });
 
   socket.on('whiteboardData', (data) => {
-    imgURLGlobal = data.img;
-
-    socket.broadcast.to(roomIdGlobal).emit('whiteBoardDataResponse', {
-      imgURL: data.img
-    });
+    userMap.set(data.uid, data.imgurl);
+    const usersInRoom = getUsersInRoom(data.roomId)
+    const roomMap = new Map(
+      [...userMap]
+      .filter(([k, v]) => usersInRoom.includes(k))
+    );
+    socket.broadcast.to(data.roomId).emit("whiteBoardDataResponse", {
+        imgMap: Array.from(roomMap)
+    })
   });
 
   socket.on('connect-to-student', (data) => {
@@ -81,6 +78,7 @@ app.use('/api/users', require('./routes/api/users'));
 app.use('/api/auth', require('./routes/api/auth'));
 app.use('/api/profile', require('./routes/api/profile'));
 app.use('/api/posts', require('./routes/api/posts'));
+app.use('/api/sessions', require('./routes/api/sessions'));
 
 // Serve static assets in production
 if (process.env.NODE_ENV === 'production') {
