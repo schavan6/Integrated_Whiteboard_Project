@@ -2,6 +2,7 @@ import { useState, useEffect} from "react";
 import { useNavigate } from "react-router-dom";
 import api from '../../../utils/api';
 import { useSelector } from 'react-redux';
+import {TableContainer, Table, TableHead, TableBody, TableRow, TableCell, Paper, Button} from '@mui/material'
 
 const JoinRoomForm = ({ uuid, socket, setUser }) => {
   const [roomId, setRoomId] = useState("");
@@ -45,31 +46,28 @@ const JoinRoomForm = ({ uuid, socket, setUser }) => {
 
   return (
 
-
-  <table>
-    <thead>
-        <tr>
-            <th>Host</th>
-            <th>Meeting Name</th>
-            {/* <th>Click</th> */}
-        </tr>
-    </thead>
-    <tbody>
-    {sessions.map((session) => (
-            <tr>
-              <td style={{textAlign: 'center'}}>{session.hostname}</td>
-              <td style={{textAlign: 'center'}}>{session.sessionname}</td>
-              <td style={{textAlign: 'center', paddingLeft: '28px', paddingBottom: '28px'}}> 
-              <button onClick={() => handleRoomJoin(session)} className="mt-4 btn-primary btn-block form-control" style={{ height: '30px', width: '70px', color: 'green'}}>
-                Join
-              </button>
-              </td>
-            </tr>
-          ))}
-
-    </tbody>
-</table>
-
+<TableContainer component={Paper}>
+  <Table aria-label='simple table'>
+    <TableHead>
+      <TableRow>
+        <TableCell sx={{fontWeight: "bold", fontSize: 'medium'}}>Host</TableCell>
+        <TableCell sx={{fontWeight: "bold", fontSize: 'medium'}}>Meeting Name</TableCell>
+        <TableCell></TableCell>
+      </TableRow>
+    </TableHead>
+    <TableBody>
+      {
+        sessions.map((session) => (
+          <TableRow key={session._id}>
+            <TableCell>{session.hostname}</TableCell>
+            <TableCell>{session.sessionname}</TableCell>
+            <TableCell> <Button variant="contained" onClick={() => handleRoomJoin(session)}> Join </Button> </TableCell>
+          </TableRow>
+        ))
+      }
+    </TableBody>
+  </Table>
+</TableContainer>
         
   );
 };

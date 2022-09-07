@@ -2,6 +2,7 @@ import "./index.css";
 import { useState, useRef } from "react";
 import WhiteBoard from "../../components/Whiteboard";
 import ShareBoard from "../../components/ShareBoard";
+import { FormControl, FormLabel, RadioGroup, FormControlLabel, Radio } from '@mui/material';
 
 const RoomPage = ({user, socket, users}) => {
 
@@ -24,13 +25,13 @@ const RoomPage = ({user, socket, users}) => {
     return( 
         <div className="row">
             <button type="button" className = "btn btn-dark"
-                style = {{display:"block", position:"absolute", top: "5%", left: "5%", height: "40px", width: "100px",}}
+                style = {{display:"block", position:"absolute", top: "10%", left: "5%", height: "40px", width: "120px",}}
                 onClick = {() => setOpenedUserTab(true)} 
             >
-                Users
+                Participants
             </button>
             {openedUserTab && (
-                <div className="position-fixed top-0 h-100 text-white bg-dark" style={{width:"250px", left:"0%"}}>
+                <div className="position-fixed top-0 h-100 text-white bg-dark" style={{width:"250px", left:"0%", zIndex: 999}}>
                     <button type="button" onClick = {() => setOpenedUserTab(false)} className="btn btn-light btn-block w-100 mt-5">
                         Close
                     </button>
@@ -44,36 +45,21 @@ const RoomPage = ({user, socket, users}) => {
                 </div>
             )}
             <h1 className="text-center py-4">
-                White Board Sharing App{" "}
-                <span className="text-primary">[Users Online : {users.length}]</span>
+                White Board Sharing Application{" "}
+                {/* <span className="text-primary">[Users Online : {users.length}]</span> */}
             </h1>
-            <div className="col-mid-10 mx-auto px-5 mt-4 mb-3 d-flex align-items-center justify-content-center">
-                <div className="d-flex col-md-2 justify-content-center gap-1">
-                    <div className="d-flex gap-1 align-items-center" >
-                        <label htmlFor="pencil">Pencil</label>
-                        <input
-                            type="radio"
-                            name="tool"
-                            id="pencil"
-                            value="pencil"
-                            checked={tool == "pencil"}
-                            className="mt-1"
-                            onChange={(e) => setTool(e.target.value)}
-                        />    
-                    </div>
-                    <div className="d-flex gap-1 align-items-center">
-                        <label htmlFor="line">Line</label>
-                        <input
-                            type="radio"
-                            name="tool"
-                            id="line"
-                            value="line"
-                            checked={tool == "line"}
-                            className="mt-1"
-                            onChange={(e) => setTool(e.target.value)}
-                        />    
-                    </div>
-                </div>
+    <div className="col-mid-10 mx-auto px-5 d-flex align-items-center justify-content-center">
+        <FormControl>
+        <RadioGroup
+            aria-labelledby="demo-controlled-radio-buttons-group"
+            name="controlled-radio-buttons-group" 
+            onChange={(e) => setTool(e.target.value)}
+            row={true}
+        >
+            <FormControlLabel value="pencil" control={<Radio />} label="Pencil" />
+            <FormControlLabel value="line" control={<Radio />} label="Line" />
+        </RadioGroup>
+        </FormControl>
 
             <div className="col-md-7">
                 <div className="d-flex align-items-center justify-content-center">

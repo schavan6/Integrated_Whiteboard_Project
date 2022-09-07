@@ -2,6 +2,7 @@ import CreateRoomForm from './CreateRoomForm';
 import JoinRoomForm from './JoinRoomForm';
 import { connect } from 'react-redux';
 import PropTypes from 'prop-types';
+import {Paper, Typography} from '@mui/material';
 
 import './index.css';
 
@@ -10,15 +11,15 @@ const Forms = ({ auth, uuid, socket, setUser }) => {
     <div className="row h-100 pt-5">
       {auth.user && auth.user.role === 'Instructor' && (
         <div className="col-md-4 mt-5 form-box p-5 border border-primary rounded-2 mx-auto d-flex flex-column align-items-center">
-          <h1 className="text-primary fw-bold">Create Room</h1>
+          <h1 className="text-primary fw-bold">Start Meeting</h1>
           <CreateRoomForm uuid={uuid} socket={socket} setUser={setUser} />
         </div>
       )}
       {auth.user && auth.user.role === 'Student' && (
-        <div className="col-md-4 mt-5 form-box p-5 border border-primary rounded-2 mx-auto d-flex flex-column align-items-center">
-          <h1 className="text-primary fw-bold">Join Room</h1>
+        <Paper>
+           <Typography align='center' fontSize='40px' className="text-primary fw-bold">Join Meeting</Typography>
           <JoinRoomForm uuid={uuid} socket={socket} setUser={setUser} />
-        </div>
+        </Paper>
       )}
     </div>
   );

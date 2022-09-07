@@ -1,10 +1,11 @@
 import { useEffect, useState, useLayoutEffect } from 'react';
 import rough from 'roughjs/bundled/rough.cjs';
+import { Box } from '@mui/material';
 
 const roughGenerator = rough.generator();
 
 const WhiteBoard = ({canvasRef, ctxRef, elements, setElements, tool, color, user, socket}) => {
-    
+
     const [isDrawing, setIsDrawing] = useState(false);
     useEffect(() => {
         const canvas = canvasRef.current;
@@ -50,7 +51,7 @@ const WhiteBoard = ({canvasRef, ctxRef, elements, setElements, tool, color, user
             }
         });
         const canvasImage = canvasRef.current.toDataURL();
-        socket.emit("whiteboardData", {imgurl: canvasImage, ishost : user.presenter, uid : user.userId, roomId: user.roomId});
+        socket.emit("whiteboardData", {imgurl: canvasImage, uid : user.userId, roomId: user.roomId});
     }
     }, [elements]);
 
@@ -128,14 +129,15 @@ const WhiteBoard = ({canvasRef, ctxRef, elements, setElements, tool, color, user
         setIsDrawing(false);    
     };
     return (
-        <div
+        <Box
             onMouseDown={handleMouseDown}
             onMouseMove={handleMouseMove}
             onMouseUp={handleMouseUp}
-            className="border border-dark border-3 h-100 w-100 overflow-hidden"
+            className="border border-dark border-3 overflow-hidden"
+            sx={{maxHeight: '700px'}}
         >
             <canvas ref = {canvasRef}/>
-        </div>
+        </Box>
     );
 };
 

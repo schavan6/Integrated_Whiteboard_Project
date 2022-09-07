@@ -1,4 +1,6 @@
 import { useEffect, useState } from "react";
+import { Box } from '@mui/material';
+
 const ShareBoard = ({user, socket, shareId}) => {
     const [imageMap, setImageMap] = useState(null);
     useEffect(() => {
@@ -8,35 +10,27 @@ const ShareBoard = ({user, socket, shareId}) => {
     }, []);
     if(!user?.presenter && imageMap != null){
         return(
-            <div className="border border-dark border-3 h-100 w-100 overflow-hidden">
+            <Box className="border border-dark border-3 overflow-hidden" sx={{maxHeight: '700px'}}>
                 <img
                     src={imageMap.get(user.hostId)}
                     alt="Real time whiteboard sharing"
-                    style={{
-                        height: window.innerHeight * 2,
-                        width: "285%",
-                    }}
                 />
-            </div>
+            </Box>
         );
     }
     else if(user?.presenter && shareId != null){
 
         return(
-            <div className="border border-dark border-3 h-100 w-100 overflow-hidden">
+            <Box className="border border-dark border-3 overflow-hidden" sx={{maxHeight: '700px'}}>
                 <img
                     src={imageMap.get(shareId)}
                     alt="Real time whiteboard sharing"
-                    style={{
-                        height: window.innerHeight * 2,
-                        width: "285%",
-                    }}
                 />
-            </div>
+            </Box>
         );
     }
     else{
-        return <h1>Hello</h1>
+        return null
     }
     }
 

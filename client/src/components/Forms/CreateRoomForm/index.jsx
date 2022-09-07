@@ -1,9 +1,8 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import api from '../../../utils/api';
 import { useSelector } from 'react-redux';
-import axios from 'axios';
-import { resetWarningCache } from "prop-types";
+import { Button } from '@mui/material';
+
 
  const CreateRoomForm = ({ uuid, socket, setUser }) => {
   const [roomId, setRoomId] = useState(uuid());
@@ -49,44 +48,26 @@ import { resetWarningCache } from "prop-types";
         <input
           type="text"
           className="form-control my-2"
-          placeholder="Enter your name"
+          placeholder="Enter meeting name"
           value={name}
           onChange={(e) => setName(e.target.value)}
         />
       </div>
-      <div className="form-group border">
-        <div className="input-group d-flex align-items-center jusitfy-content-center">
-          <input
-            type="text"
-            value={roomId}
-            className="form-control my-2 border-0"
-            disabled
-            placeholder="Generate room code"
-          />
-          <div className="input-group-append">
-            <button
-              className="btn btn-primary btn-sm me-1"
-              onClick={() => setRoomId(uuid())}
-              type="button"
-            >
-              generate
-            </button>
-            <button
-              className="btn btn-outline-danger btn-sm me-2"
-              type="button"
-            >
-              copy
-            </button>
-          </div>
-        </div>
+      <div className="form-group">
+        <input
+          type="text"
+          className="form-control my-2"
+          placeholder="Enter meeting description"
+        />
       </div>
-      <button
+      <Button
         type="submit"
+        variant="contained"
         onClick={handleCreateRoom}
         className="mt-4 btn-primary btn-block form-control"
       >
-        Generate Room
-      </button>
+        START
+      </Button>
     </form>
   );
 };
