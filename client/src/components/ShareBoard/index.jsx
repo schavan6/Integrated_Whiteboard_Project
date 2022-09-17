@@ -28,9 +28,7 @@ const ShareBoard = ({
     if (ctxRef && ctxRef.current) {
       var image = new Image();
 
-      //console.log('TV Redraw Canvas ');
       image.onload = function () {
-        console.log('TV Redraw Canvas onload ', image.src);
         ctxRef.current.drawImage(image, 0, 0);
       };
       image.src = url;
@@ -59,12 +57,15 @@ const ShareBoard = ({
   }, [imageMap]);
 
   useEffect(() => {
-    ctxRef.current.clearRect(
-      0,
-      0,
-      canvasRef.current.width,
-      canvasRef.current.height
-    );
+    if (user?.presenter) {
+      ctxRef.current.clearRect(
+        0,
+        0,
+        canvasRef.current.width,
+        canvasRef.current.height
+      );
+      setElements([]);
+    }
   }, [shareId]);
 
   const handleMouseDown = (e) => {
@@ -165,6 +166,13 @@ const ShareBoard = ({
         }
       });
       const canvasImage = canvasRef.current.toDataURL();
+      if (user?.presenter && shareId != null) {
+        socket.emit('sharedWhiteboardData', {
+          imgurl: canvasImage,
+          roomId: user.roomId,
+          receiver: shareId
+        });
+      }
     }
   }, [elements]);
 

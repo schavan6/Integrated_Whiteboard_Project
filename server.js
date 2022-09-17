@@ -46,6 +46,10 @@ io.on('connection', (socket) => {
     });
   });
 
+  socket.on('sharedWhiteboardData', (data) => {
+    socket.broadcast.to(data.roomId).emit('sharedWhiteBoardDataResponse', data);
+  });
+
   socket.on('connect-to-student', (data) => {
     socket.to(data).emit('connect-to-instructor');
   });
