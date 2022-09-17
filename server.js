@@ -9,7 +9,12 @@ const app = express();
 const server = require('http').createServer(app);
 const { Server } = require('socket.io');
 
-const { addUser, getUser, removeUser, getUsersInRoom } = require('./utils/users');
+const {
+  addUser,
+  getUser,
+  removeUser,
+  getUsersInRoom
+} = require('./utils/users');
 
 const io = new Server(server);
 
@@ -19,11 +24,11 @@ let roomIdGlobal, imgURLGlobal;
 let userMap = new Map();
 io.on('connection', (socket) => {
   socket.on('userJoined', (data) => {
-    const { name, userId, roomId, host, presenter, hostId} = data;
+    const { name, userId, roomId, host, presenter, hostId } = data;
     roomIdGlobal = roomId;
     socket.join(roomId);
     const users = addUser(data);
-    socket.emit("userIsJoined", {success: true, users});
+    socket.emit('userIsJoined', { success: true, users });
     socket.nsp.to(roomId).emit('allUsers', users);
     socket.broadcast.to(roomId).emit('whiteBoardDataResponse', {
       imgURL: imgURLGlobal
@@ -32,14 +37,13 @@ io.on('connection', (socket) => {
 
   socket.on('whiteboardData', (data) => {
     userMap.set(data.uid, data.imgurl);
-    const usersInRoom = getUsersInRoom(data.roomId)
+    const usersInRoom = getUsersInRoom(data.roomId);
     const roomMap = new Map(
-      [...userMap]
-      .filter(([k, v]) => usersInRoom.includes(k))
+      [...userMap].filter(([k, v]) => usersInRoom.includes(k))
     );
-    socket.broadcast.to(data.roomId).emit("whiteBoardDataResponse", {
-        imgMap: Array.from(roomMap)
-    })
+    socket.broadcast.to(data.roomId).emit('whiteBoardDataResponse', {
+      imgMap: Array.from(roomMap)
+    });
   });
 
   socket.on('connect-to-student', (data) => {
