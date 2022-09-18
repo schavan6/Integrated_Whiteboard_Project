@@ -33,6 +33,18 @@ const RoomPage = ({ user, socket, users }) => {
     return (shareId === null && user?.presenter) || user.userId == shareId;
   };
 
+  const onNameClick = (userId) => {
+    if (userId !== user.userId) {
+      socket.emit('requestBoard', {
+        id: userId,
+        uid: user.userId,
+        roomId: user.roomId
+      });
+    }
+
+    setShareId(userId);
+  };
+
   return (
     <div className="row">
       <button
@@ -67,7 +79,7 @@ const RoomPage = ({ user, socket, users }) => {
               <p
                 key={index * 999}
                 className="my-2 text-center w-100"
-                onClick={() => setShareId(usr.userId)}
+                onClick={() => onNameClick(usr.userId)}
               >
                 {usr.name} {user && user.userId === usr.userId && '(You)'}
               </p>

@@ -46,12 +46,18 @@ io.on('connection', (socket) => {
     });
   });
 
-  socket.on('sharedWhiteboardData', (data) => {
-    socket.broadcast.to(data.roomId).emit('sharedWhiteBoardDataResponse', data);
+  socket.on('requestBoard', (data) => {
+    const usersInRoom = getUsersInRoom(data.roomId);
+    const roomMap = new Map(
+      [...userMap].filter(([k, v]) => usersInRoom.includes(k))
+    );
+    io.to(data.roomId).emit('responseBoard', {
+      imgMap: Array.from(roomMap)
+    });
   });
 
-  socket.on('connect-to-student', (data) => {
-    socket.to(data).emit('connect-to-instructor');
+  socket.on('sharedWhiteboardData', (data) => {
+    socket.broadcast.to(data.roomId).emit('sharedWhiteBoardDataResponse', data);
   });
 
   socket.on('message', (data) => {
