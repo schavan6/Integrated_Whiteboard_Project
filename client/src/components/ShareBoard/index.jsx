@@ -22,10 +22,6 @@ const ShareBoard = ({
     socket.on('whiteBoardDataResponse', (data) => {
       setImageMap(new Map(data.imgMap));
     });
-
-    socket.on('responseBoard', (data) => {
-      setImageMap(new Map(data.imgMap));
-    });
   }, []);
 
   const drawImageOnCanvas = (url) => {

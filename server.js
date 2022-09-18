@@ -51,7 +51,7 @@ io.on('connection', (socket) => {
     const roomMap = new Map(
       [...userMap].filter(([k, v]) => usersInRoom.includes(k))
     );
-    io.to(data.roomId).emit('responseBoard', {
+    io.to(data.roomId).emit('whiteBoardDataResponse', {
       imgMap: Array.from(roomMap)
     });
   });
