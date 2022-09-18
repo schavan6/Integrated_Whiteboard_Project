@@ -2,6 +2,8 @@ import './index.css';
 import { useState, useRef } from 'react';
 import WhiteBoard from '../../components/Whiteboard';
 import ShareBoard from '../../components/ShareBoard';
+import CreateGroupModal from '../../components/CreateGroupModal';
+
 import {
   FormControl,
   RadioGroup,
@@ -20,6 +22,7 @@ const RoomPage = ({ user, socket, users }) => {
   const [sharedElements, setSharedElements] = useState([]);
   const [openedUserTab, setOpenedUserTab] = useState(false);
   const [shareId, setShareId] = useState(null);
+  const [openModal, setOpenModal] = useState(false);
 
   const handleClearCanvas = () => {
     const canvas = canvasRef.current;
@@ -33,7 +36,48 @@ const RoomPage = ({ user, socket, users }) => {
     return (shareId === null && user?.presenter) || user.userId == shareId;
   };
 
+  const sendGroupCreationEvent = (usersAdded, name) => {
+    setOpenModal(false);
+
+    /*const roomData = {
+      name: name,
+      roomId: user.roomId,
+      userId: user._id,
+      host: false,
+      presenter: false,
+      hostId: session.hostid
+    };
+    setUser(roomData);
+    navigate(`/${session._id}`);
+    socket.emit('userJoined', roomData);*/
+  };
+
+  const uuid = () => {
+    let S4 = () => {
+      return (((1 + Math.random()) * 0x10000) | 0).toString(16).substring(1);
+    };
+    return (
+      S4() +
+      S4() +
+      '-' +
+      S4() +
+      '-' +
+      S4() +
+      '-' +
+      S4() +
+      '-' +
+      S4() +
+      S4() +
+      S4()
+    );
+  };
+
+  const closeModal = () => {
+    setOpenModal(false);
+  };
+
   const onNameClick = (userId) => {
+    console.log(userId);
     if (userId !== user.userId) {
       socket.emit('requestBoard', {
         id: userId,
@@ -43,6 +87,10 @@ const RoomPage = ({ user, socket, users }) => {
     }
 
     setShareId(userId);
+  };
+
+  const canOpenModal = () => {
+    return user?.presenter && openModal;
   };
 
   return (
@@ -87,10 +135,7 @@ const RoomPage = ({ user, socket, users }) => {
           </div>
         </div>
       )}
-      <h1 className="text-center py-4">
-        White Board Sharing Application{' '}
-        {/* <span className="text-primary">[Users Online : {users.length}]</span> */}
-      </h1>
+      <h1 className="text-center py-4">White Board Sharing Application </h1>
       <div className="col-mid-10 mx-auto px-5 d-flex align-items-center justify-content-center">
         <FormControl>
           <RadioGroup
@@ -125,6 +170,18 @@ const RoomPage = ({ user, socket, users }) => {
             Clear Board
           </button>
         </div>
+        <div>
+          {user?.presenter && users.length > 1 && (
+            <div className="col-md-2">
+              <button
+                className="btn btn-primary"
+                onClick={() => setOpenModal(true)}
+              >
+                Create Group
+              </button>
+            </div>
+          )}
+        </div>
       </div>
       {showWhiteBoard() ? (
         <WhiteBoard
@@ -148,6 +205,14 @@ const RoomPage = ({ user, socket, users }) => {
           user={user}
           socket={socket}
           shareId={shareId}
+        />
+      )}
+      {canOpenModal() && (
+        <CreateGroupModal
+          sendGroupCreationEvent={sendGroupCreationEvent}
+          closeModal={closeModal}
+          users={users}
+          user={user}
         />
       )}
     </div>
