@@ -38,18 +38,16 @@ const RoomPage = ({ user, socket, users }) => {
 
   const sendGroupCreationEvent = (usersAdded, name) => {
     setOpenModal(false);
-
-    /*const roomData = {
+    const newUserId = uuid();
+    const roomData = {
       name: name,
       roomId: user.roomId,
-      userId: user._id,
+      userId: newUserId,
       host: false,
       presenter: false,
-      hostId: session.hostid
+      hostId: user.userId
     };
-    setUser(roomData);
-    navigate(`/${session._id}`);
-    socket.emit('userJoined', roomData);*/
+    socket.emit('userJoined', roomData);
   };
 
   const uuid = () => {
