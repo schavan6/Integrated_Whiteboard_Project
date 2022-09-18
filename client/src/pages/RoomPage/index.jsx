@@ -28,6 +28,11 @@ const RoomPage = ({ user, socket, users }) => {
     ctx.clearRect(0, 0, canvasRef.current.width, canvasRef.current.height);
     setElements([]);
   };
+
+  const showWhiteBoard = () => {
+    return (shareId === null && user?.presenter) || user.userId == shareId;
+  };
+
   return (
     <div className="row">
       <button
@@ -109,34 +114,30 @@ const RoomPage = ({ user, socket, users }) => {
           </button>
         </div>
       </div>
-
-      <div className="row h-100 pt-55">
-        <div className="col-md-6 mx-auto mt-4 canvas-box">
-          <WhiteBoard
-            canvasRef={canvasRef}
-            ctxRef={ctxRef}
-            elements={elements}
-            setElements={setElements}
-            tool={tool}
-            color={color}
-            user={user}
-            socket={socket}
-          />
-        </div>
-        <div className="col-md-6 mx-auto mt-4 canvas-box">
-          <ShareBoard
-            canvasRef={sharedCanvasRef}
-            ctxRef={sharedCtxRef}
-            elements={sharedElements}
-            setElements={setSharedElements}
-            tool={tool}
-            color={color}
-            user={user}
-            socket={socket}
-            shareId={shareId}
-          />
-        </div>
-      </div>
+      {showWhiteBoard() ? (
+        <WhiteBoard
+          canvasRef={canvasRef}
+          ctxRef={ctxRef}
+          elements={elements}
+          setElements={setElements}
+          tool={tool}
+          color={color}
+          user={user}
+          socket={socket}
+        />
+      ) : (
+        <ShareBoard
+          canvasRef={sharedCanvasRef}
+          ctxRef={sharedCtxRef}
+          elements={sharedElements}
+          setElements={setSharedElements}
+          tool={tool}
+          color={color}
+          user={user}
+          socket={socket}
+          shareId={shareId}
+        />
+      )}
     </div>
   );
 };

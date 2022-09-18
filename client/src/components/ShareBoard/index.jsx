@@ -51,7 +51,7 @@ const ShareBoard = ({
   useEffect(() => {
     if (!user?.presenter && imageMap != null) {
       drawImageOnCanvas(imageMap.get(user.hostId));
-    } else if (user?.presenter && shareId != null) {
+    } else if (user?.presenter && shareId !== null && imageMap !== null) {
       drawImageOnCanvas(imageMap.get(shareId));
     }
   }, [imageMap]);
@@ -138,7 +138,7 @@ const ShareBoard = ({
     setIsDrawing(false);
   };
 
-  useLayoutEffect(() => {
+  useEffect(() => {
     if (canvasRef) {
       const roughCanvas = rough.canvas(canvasRef.current);
 

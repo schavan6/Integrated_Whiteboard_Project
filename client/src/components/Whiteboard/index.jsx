@@ -36,7 +36,7 @@ const WhiteBoard = ({
     ctxRef.current = ctx;
   }, []);
 
-  useLayoutEffect(() => {
+  useEffect(() => {
     if (canvasRef) {
       const roughCanvas = rough.canvas(canvasRef.current);
 
