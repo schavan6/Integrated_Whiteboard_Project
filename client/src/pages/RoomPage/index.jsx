@@ -109,7 +109,7 @@ const RoomPage = ({ user, socket, users }) => {
   };
 
   return (
-    <div className="container">
+    <div className="row">
       <button
         type="button"
         className="btn btn-dark"

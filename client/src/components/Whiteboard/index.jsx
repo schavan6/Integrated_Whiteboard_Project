@@ -156,14 +156,15 @@ const WhiteBoard = ({
     setIsDrawing(false);
   };
   return (
-    <div
+    <Box
       onMouseDown={handleMouseDown}
       onMouseMove={handleMouseMove}
       onMouseUp={handleMouseUp}
       className="border border-dark border-3 overflow-hidden"
+      sx={{ maxHeight: '700px' }}
     >
-      <canvas style={{ 'max-height': '31.25rem' }} ref={canvasRef} />
-    </div>
+      <canvas ref={canvasRef} />
+    </Box>
   );
 };
 
