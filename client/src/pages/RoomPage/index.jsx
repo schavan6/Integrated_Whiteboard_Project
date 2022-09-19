@@ -109,7 +109,7 @@ const RoomPage = ({ user, socket, users }) => {
   };
 
   return (
-    <div className="row">
+    <div className="container">
       <button
         type="button"
         className="btn btn-dark"
@@ -168,13 +168,14 @@ const RoomPage = ({ user, socket, users }) => {
           </RadioGroup>
         </FormControl>
 
-        <div className="col-md-7">
+        <div className="col-md-5">
           <div className="d-flex align-items-center justify-content-center">
             <label htmlFor="color">Select Color: </label>
             <input
               type="color"
               id="color"
               value="{color}"
+              style={{ width: '100px' }}
               className="mt-1 ms-3"
               onChange={(e) => setColor(e.target.value)}
             />
@@ -185,18 +186,17 @@ const RoomPage = ({ user, socket, users }) => {
             Clear Board
           </button>
         </div>
-        <div>
-          {user?.presenter && users.length > 1 && (
-            <div className="col-md-2">
-              <button
-                className="btn btn-primary"
-                onClick={() => setOpenModal(true)}
-              >
-                Create Group
-              </button>
-            </div>
-          )}
-        </div>
+
+        {user?.presenter && users.length > 1 && (
+          <div className="col-md-2">
+            <button
+              className="btn btn-primary"
+              onClick={() => setOpenModal(true)}
+            >
+              Create Group
+            </button>
+          </div>
+        )}
       </div>
       {showWhiteBoard() ? (
         <WhiteBoard

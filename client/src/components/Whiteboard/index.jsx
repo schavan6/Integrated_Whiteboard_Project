@@ -1,4 +1,4 @@
-import { useEffect, useState, useLayoutEffect } from 'react';
+import { useEffect, useState } from 'react';
 import rough from 'roughjs/bundled/rough.cjs';
 import { Box } from '@mui/material';
 
@@ -25,8 +25,8 @@ const WhiteBoard = ({
   }, []);
   useEffect(() => {
     const canvas = canvasRef.current;
-    canvas.height = window.innerHeight * 2;
-    canvas.width = window.innerWidth * 2;
+    canvas.height = window.innerHeight;
+    canvas.width = window.innerWidth;
     const ctx = canvas.getContext('2d');
 
     ctx.strokeStyle = color;
@@ -156,15 +156,14 @@ const WhiteBoard = ({
     setIsDrawing(false);
   };
   return (
-    <Box
+    <div
       onMouseDown={handleMouseDown}
       onMouseMove={handleMouseMove}
       onMouseUp={handleMouseUp}
       className="border border-dark border-3 overflow-hidden"
-      sx={{ maxHeight: '700px' }}
     >
-      <canvas ref={canvasRef} />
-    </Box>
+      <canvas style={{ 'max-height': '31.25rem' }} ref={canvasRef} />
+    </div>
   );
 };
 
