@@ -4,7 +4,7 @@ import { Box } from '@mui/material';
 
 const roughGenerator = rough.generator();
 
-const WhiteBoard = ({
+const GroupBoard = ({
   canvasRef,
   ctxRef,
   elements,
@@ -15,14 +15,22 @@ const WhiteBoard = ({
   socket
 }) => {
   const [isDrawing, setIsDrawing] = useState(false);
+  const [imageMap, setImageMap] = useState(null);
+
   useEffect(() => {
     socket.on('sharedWhiteBoardDataResponse', (data) => {
-      //setImageMap(new Map(data.imgMap));
-      if (user.userId == data.receiver) {
+      if (user.groupId == data.receiver) {
         drawImageOnCanvas(data.imgurl);
       }
     });
   }, []);
+
+  useEffect(() => {
+    socket.on('whiteBoardDataResponse', (data) => {
+      setImageMap(new Map(data.imgMap));
+    });
+  }, []);
+
   useEffect(() => {
     const canvas = canvasRef.current;
     canvas.height = window.innerHeight * 2;
@@ -35,6 +43,12 @@ const WhiteBoard = ({
 
     ctxRef.current = ctx;
   }, []);
+
+  useEffect(() => {
+    if (imageMap !== null && imageMap.has(user.groupId)) {
+      drawImageOnCanvas(imageMap.get(user.groupId));
+    }
+  }, [imageMap]);
 
   useEffect(() => {
     if (canvasRef) {
@@ -66,7 +80,7 @@ const WhiteBoard = ({
       const canvasImage = canvasRef.current.toDataURL();
       socket.emit('whiteboardData', {
         imgurl: canvasImage,
-        uid: user.userId,
+        uid: user.groupId,
         roomId: user.roomId
       });
     }
@@ -111,7 +125,6 @@ const WhiteBoard = ({
       image.src = url;
     }
   };
-
   const handleMouseMove = (e) => {
     const { offsetX, offsetY } = e.nativeEvent;
     if (isDrawing) {
@@ -152,6 +165,7 @@ const WhiteBoard = ({
   const handleMouseUp = (e) => {
     setIsDrawing(false);
   };
+
   return (
     <Box
       onMouseDown={handleMouseDown}
@@ -165,4 +179,4 @@ const WhiteBoard = ({
   );
 };
 
-export default WhiteBoard;
+export default GroupBoard;

@@ -1,7 +1,8 @@
 import './index.css';
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import WhiteBoard from '../../components/Whiteboard';
 import ShareBoard from '../../components/ShareBoard';
+import GroupBoard from '../../components/GroupBoard';
 import CreateGroupModal from '../../components/CreateGroupModal';
 
 import {
@@ -20,9 +21,21 @@ const RoomPage = ({ user, socket, users }) => {
   const sharedCtxRef = useRef(null);
   const [elements, setElements] = useState([]);
   const [sharedElements, setSharedElements] = useState([]);
+  const [groupElements, setGroupElements] = useState([]);
   const [openedUserTab, setOpenedUserTab] = useState(false);
   const [shareId, setShareId] = useState(null);
   const [openModal, setOpenModal] = useState(false);
+  const [groupId, setGroupId] = useState(null);
+
+  useEffect(() => {
+    socket.on('joinGroup', (data) => {
+      if (data.members.includes(user.userId)) {
+        alert("You are added to group '" + data.groupName + "'.");
+        setGroupId(data.groupId);
+        user.groupId = data.groupId;
+      }
+    });
+  }, []);
 
   const handleClearCanvas = () => {
     const canvas = canvasRef.current;
@@ -48,6 +61,13 @@ const RoomPage = ({ user, socket, users }) => {
       hostId: user.userId
     };
     socket.emit('userJoined', roomData);
+    const data = {
+      members: usersAdded,
+      groupId: newUserId,
+      roomId: user.roomId,
+      groupName: name
+    };
+    socket.emit('createGroup', data);
   };
 
   const uuid = () => {
@@ -75,16 +95,13 @@ const RoomPage = ({ user, socket, users }) => {
   };
 
   const onNameClick = (userId) => {
-    console.log(userId);
-    if (userId !== user.userId) {
-      socket.emit('requestBoard', {
-        id: userId,
-        uid: user.userId,
-        roomId: user.roomId
-      });
-    }
-
     setShareId(userId);
+
+    socket.emit('requestBoard', {
+      id: userId,
+      uid: user.userId,
+      roomId: user.roomId
+    });
   };
 
   const canOpenModal = () => {
@@ -187,6 +204,17 @@ const RoomPage = ({ user, socket, users }) => {
           ctxRef={ctxRef}
           elements={elements}
           setElements={setElements}
+          tool={tool}
+          color={color}
+          user={user}
+          socket={socket}
+        />
+      ) : shareId != null && shareId === groupId ? (
+        <GroupBoard
+          canvasRef={sharedCanvasRef}
+          ctxRef={sharedCtxRef}
+          elements={groupElements}
+          setElements={setGroupElements}
           tool={tool}
           color={color}
           user={user}
