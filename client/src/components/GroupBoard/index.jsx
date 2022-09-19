@@ -1,10 +1,10 @@
-import { useEffect, useState, useLayoutEffect } from 'react';
+import { useEffect, useState } from 'react';
 import rough from 'roughjs/bundled/rough.cjs';
 import { Box } from '@mui/material';
 
 const roughGenerator = rough.generator();
 
-const ShareBoard = ({
+const GroupBoard = ({
   canvasRef,
   ctxRef,
   elements,
@@ -12,28 +12,24 @@ const ShareBoard = ({
   tool,
   color,
   user,
-  socket,
-  shareId
+  socket
 }) => {
-  const [imageMap, setImageMap] = useState(null);
   const [isDrawing, setIsDrawing] = useState(false);
+  const [imageMap, setImageMap] = useState(null);
+
+  useEffect(() => {
+    socket.on('sharedWhiteBoardDataResponse', (data) => {
+      if (user.groupId == data.receiver) {
+        drawImageOnCanvas(data.imgurl);
+      }
+    });
+  }, []);
 
   useEffect(() => {
     socket.on('whiteBoardDataResponse', (data) => {
       setImageMap(new Map(data.imgMap));
     });
   }, []);
-
-  const drawImageOnCanvas = (url) => {
-    if (ctxRef && ctxRef.current) {
-      var image = new Image();
-
-      image.onload = function () {
-        ctxRef.current.drawImage(image, 0, 0);
-      };
-      image.src = url;
-    }
-  };
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -49,24 +45,48 @@ const ShareBoard = ({
   }, []);
 
   useEffect(() => {
-    if (!user?.presenter && imageMap != null) {
-      drawImageOnCanvas(imageMap.get(user.hostId));
-    } else if (user?.presenter && shareId !== null && imageMap !== null) {
-      drawImageOnCanvas(imageMap.get(shareId));
+    if (imageMap !== null && imageMap.has(user.groupId)) {
+      drawImageOnCanvas(imageMap.get(user.groupId));
     }
   }, [imageMap]);
 
   useEffect(() => {
-    if (user?.presenter) {
-      ctxRef.current.clearRect(
-        0,
-        0,
-        canvasRef.current.width,
-        canvasRef.current.height
-      );
-      setElements([]);
+    if (canvasRef) {
+      const roughCanvas = rough.canvas(canvasRef.current);
+
+      elements.forEach((element) => {
+        if (element.type == 'line') {
+          roughCanvas.draw(
+            roughGenerator.line(
+              element.offsetX,
+              element.offsetY,
+              element.width,
+              element.height,
+              {
+                stroke: element.stroke,
+                strokeWidth: 5,
+                roughness: 0
+              }
+            )
+          );
+        } else if (element.type == 'pencil') {
+          roughCanvas.linearPath(element.path, {
+            stroke: element.stroke,
+            strokeWidth: 5,
+            roughness: 0
+          });
+        }
+      });
+      if (elements.length > 0) {
+        const canvasImage = canvasRef.current.toDataURL();
+        socket.emit('whiteboardData', {
+          imgurl: canvasImage,
+          uid: user.groupId,
+          roomId: user.roomId
+        });
+      }
     }
-  }, [shareId]);
+  }, [elements]);
 
   const handleMouseDown = (e) => {
     const { offsetX, offsetY } = e.nativeEvent;
@@ -97,6 +117,16 @@ const ShareBoard = ({
     setIsDrawing(true);
   };
 
+  const drawImageOnCanvas = (url) => {
+    if (ctxRef && ctxRef.current) {
+      var image = new Image();
+
+      image.onload = function () {
+        ctxRef.current.drawImage(image, 0, 0);
+      };
+      image.src = url;
+    }
+  };
   const handleMouseMove = (e) => {
     const { offsetX, offsetY } = e.nativeEvent;
     if (isDrawing) {
@@ -138,46 +168,6 @@ const ShareBoard = ({
     setIsDrawing(false);
   };
 
-  useEffect(() => {
-    if (canvasRef) {
-      const roughCanvas = rough.canvas(canvasRef.current);
-
-      elements.forEach((element) => {
-        if (element.type == 'line') {
-          roughCanvas.draw(
-            roughGenerator.line(
-              element.offsetX,
-              element.offsetY,
-              element.width,
-              element.height,
-              {
-                stroke: element.stroke,
-                strokeWidth: 5,
-                roughness: 0
-              }
-            )
-          );
-        } else if (element.type == 'pencil') {
-          roughCanvas.linearPath(element.path, {
-            stroke: element.stroke,
-            strokeWidth: 5,
-            roughness: 0
-          });
-        }
-      });
-
-      const canvasImage = canvasRef.current.toDataURL();
-
-      if (user?.presenter && shareId != null && elements.length > 0) {
-        socket.emit('sharedWhiteboardData', {
-          imgurl: canvasImage,
-          roomId: user.roomId,
-          receiver: shareId
-        });
-      }
-    }
-  }, [elements]);
-
   return (
     <Box
       onMouseDown={handleMouseDown}
@@ -191,4 +181,4 @@ const ShareBoard = ({
   );
 };
 
-export default ShareBoard;
+export default GroupBoard;

@@ -63,12 +63,15 @@ const WhiteBoard = ({
           });
         }
       });
-      const canvasImage = canvasRef.current.toDataURL();
-      socket.emit('whiteboardData', {
-        imgurl: canvasImage,
-        uid: user.userId,
-        roomId: user.roomId
-      });
+
+      if (elements.length > 0) {
+        const canvasImage = canvasRef.current.toDataURL();
+        socket.emit('whiteboardData', {
+          imgurl: canvasImage,
+          uid: user.userId,
+          roomId: user.roomId
+        });
+      }
     }
   }, [elements]);
 

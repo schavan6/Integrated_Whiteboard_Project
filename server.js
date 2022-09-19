@@ -35,6 +35,10 @@ io.on('connection', (socket) => {
     });
   });
 
+  socket.on('createGroup', (data) => {
+    socket.broadcast.to(data.roomId).emit('joinGroup', data);
+  });
+
   socket.on('whiteboardData', (data) => {
     userMap.set(data.uid, data.imgurl);
     const usersInRoom = getUsersInRoom(data.roomId);
