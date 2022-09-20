@@ -31,6 +31,8 @@ const RoomPage = ({ user, socket, users }) => {
     user?.presenter ? false : true
   );
   const [isGroupActive, setGroupActive] = useState(false);
+  const [screenShareId, setScreenShareId] = useState('');
+  const [screenShareName, setScreenShareName] = useState('');
 
   useEffect(() => {
     socket.on('joinGroup', (data) => {
@@ -133,6 +135,16 @@ const RoomPage = ({ user, socket, users }) => {
     return user?.presenter && openModal;
   };
 
+  const shareScreen = (isAnonymous, userId, userName) => {
+    setScreenShareId(userId);
+    setScreenShareName(userName);
+  };
+
+  const stopSharing = () => {
+    setScreenShareId('');
+    setScreenShareName('');
+  };
+
   return (
     <div className="row">
       <button
@@ -164,13 +176,67 @@ const RoomPage = ({ user, socket, users }) => {
           </button>
           <div className="w-100 mt-5 pt-5">
             {users.map((usr, index) => (
-              <p
-                key={index * 999}
-                className="my-2 text-center w-100"
-                onClick={() => onNameClick(usr.userId, usr.name)}
-              >
-                {usr.name} {user && user.userId === usr.userId && '(You)'}
-              </p>
+              <div>
+                <p
+                  key={index * 999}
+                  className="my-2 text-center w-100"
+                  onClick={() => onNameClick(usr.userId, usr.name)}
+                >
+                  {usr.name} {user && user.userId === usr.userId && '(You)'}
+                </p>
+
+                {user?.presenter && (
+                  <div className="dropdown" style={{ textAlign: 'center' }}>
+                    <button
+                      className="btn btn-secondary dropdown-toggle"
+                      type="button"
+                      data-bs-toggle="dropdown"
+                      aria-expanded="false"
+                    >
+                      <i className="fas fa-user"></i>
+                    </button>
+                    <ul className="dropdown-menu">
+                      {screenShareId === '' && (
+                        <li>
+                          <button
+                            className="dropdown-item"
+                            onClick={() => {
+                              shareScreen(true, usr.userId, usr.name);
+                            }}
+                          >
+                            Share
+                          </button>
+                        </li>
+                      )}
+                      {screenShareId === '' && (
+                        <li>
+                          <button
+                            className="dropdown-item"
+                            onClick={() => {
+                              shareScreen(false, usr.userId, usr.name);
+                            }}
+                          >
+                            Share Privately
+                          </button>
+                        </li>
+                      )}
+                      {screenShareId !== '' && (
+                        <li>
+                          <button
+                            className="dropdown-item"
+                            onClick={() => {
+                              stopSharing(usr.userId, usr.name);
+                            }}
+                          >
+                            Stop Sharing
+                          </button>
+                        </li>
+                      )}
+                    </ul>
+                  </div>
+                )}
+                <br />
+              </div>
             ))}
           </div>
         </div>
@@ -239,7 +305,8 @@ const RoomPage = ({ user, socket, users }) => {
           color={color}
           user={user}
           socket={socket}
-          shareName={shareName}
+          screenShareId={screenShareId}
+          screenShareName={screenShareName}
         />
       ) : shareId != null && shareId === groupId ? (
         <GroupBoard

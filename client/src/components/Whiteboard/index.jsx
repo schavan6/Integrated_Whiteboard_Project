@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useLayoutEffect } from 'react';
 import rough from 'roughjs/bundled/rough.cjs';
 import { Box } from '@mui/material';
 
@@ -13,17 +13,68 @@ const WhiteBoard = ({
   color,
   user,
   socket,
-  shareName
+  screenShareId,
+  screenShareName
 }) => {
   const [isDrawing, setIsDrawing] = useState(false);
+  const [imageMap, setImageMap] = useState(null);
+  const [selfImage, setSelfImage] = useState('');
+
+  useEffect(() => {
+    socket.on('whiteBoardDataResponse', (data) => {
+      setImageMap(new Map(data.imgMap));
+    });
+  }, []);
+
   useEffect(() => {
     socket.on('sharedWhiteBoardDataResponse', (data) => {
-      //setImageMap(new Map(data.imgMap));
       if (user.userId == data.receiver) {
         drawImageOnCanvas(data.imgurl);
       }
     });
   }, []);
+
+  useEffect(() => {
+    if (ctxRef && ctxRef.current) {
+      const canvasImage = canvasRef.current.toDataURL();
+      setSelfImage(canvasImage);
+      ctxRef.current.clearRect(
+        0,
+        0,
+        canvasRef.current.width,
+        canvasRef.current.height
+      );
+    }
+    if (screenShareId !== '') {
+      setIsDrawing(false);
+
+      if (imageMap !== null && imageMap.has(screenShareId)) {
+        drawImageOnCanvas(imageMap.get(screenShareId));
+      }
+    } else {
+      drawElements();
+    }
+  }, [screenShareId]);
+
+  useLayoutEffect(() => {
+    if (
+      screenShareId !== '' &&
+      imageMap !== null &&
+      imageMap.has(screenShareId)
+    ) {
+      socket.emit('whiteboardData', {
+        imgurl: imageMap.get(screenShareId),
+        uid: user.userId,
+        roomId: user.roomId
+      });
+    } else if (imageMap !== null && imageMap.has(user.userId)) {
+      socket.emit('whiteboardData', {
+        imgurl: selfImage,
+        uid: user.userId,
+        roomId: user.roomId
+      });
+    }
+  }, [screenShareId]);
   useEffect(() => {
     const canvas = canvasRef.current;
     canvas.height = window.innerHeight;
@@ -38,6 +89,20 @@ const WhiteBoard = ({
   }, []);
 
   useEffect(() => {
+    if (canvasRef) {
+      drawElements();
+      if (elements.length > 0) {
+        const canvasImage = canvasRef.current.toDataURL();
+        socket.emit('whiteboardData', {
+          imgurl: canvasImage,
+          uid: user.userId,
+          roomId: user.roomId
+        });
+      }
+    }
+  }, [elements]);
+
+  const drawElements = () => {
     if (canvasRef) {
       const roughCanvas = rough.canvas(canvasRef.current);
 
@@ -64,45 +129,38 @@ const WhiteBoard = ({
           });
         }
       });
-
-      if (elements.length > 0) {
-        const canvasImage = canvasRef.current.toDataURL();
-        socket.emit('whiteboardData', {
-          imgurl: canvasImage,
-          uid: user.userId,
-          roomId: user.roomId
-        });
-      }
     }
-  }, [elements]);
+  };
 
   const handleMouseDown = (e) => {
-    const { offsetX, offsetY } = e.nativeEvent;
-    if (tool == 'pencil') {
-      setElements((prevElements) => [
-        ...prevElements,
-        {
-          type: 'pencil',
-          offsetX,
-          offsetY,
-          path: [[offsetX, offsetY]],
-          stroke: color
-        }
-      ]);
-    } else if (tool == 'line') {
-      setElements((prevElements) => [
-        ...prevElements,
-        {
-          type: 'line',
-          offsetX,
-          offsetY,
-          width: offsetX,
-          height: offsetY,
-          stroke: color
-        }
-      ]);
+    if (screenShareId === '') {
+      const { offsetX, offsetY } = e.nativeEvent;
+      if (tool == 'pencil') {
+        setElements((prevElements) => [
+          ...prevElements,
+          {
+            type: 'pencil',
+            offsetX,
+            offsetY,
+            path: [[offsetX, offsetY]],
+            stroke: color
+          }
+        ]);
+      } else if (tool == 'line') {
+        setElements((prevElements) => [
+          ...prevElements,
+          {
+            type: 'line',
+            offsetX,
+            offsetY,
+            width: offsetX,
+            height: offsetY,
+            stroke: color
+          }
+        ]);
+      }
+      setIsDrawing(true);
     }
-    setIsDrawing(true);
   };
 
   const drawImageOnCanvas = (url) => {

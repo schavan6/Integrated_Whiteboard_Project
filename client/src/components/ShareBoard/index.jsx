@@ -50,7 +50,15 @@ const ShareBoard = ({
 
   useEffect(() => {
     if (!user?.presenter && imageMap != null) {
-      drawImageOnCanvas(imageMap.get(user.hostId));
+      if (ctxRef && ctxRef.current) {
+        ctxRef.current.clearRect(
+          0,
+          0,
+          canvasRef.current.width,
+          canvasRef.current.height
+        );
+        drawImageOnCanvas(imageMap.get(user.hostId));
+      }
     } else if (user?.presenter && shareId !== null && imageMap !== null) {
       drawImageOnCanvas(imageMap.get(shareId));
     }
