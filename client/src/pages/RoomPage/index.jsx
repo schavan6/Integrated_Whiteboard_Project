@@ -24,8 +24,13 @@ const RoomPage = ({ user, socket, users }) => {
   const [groupElements, setGroupElements] = useState([]);
   const [openedUserTab, setOpenedUserTab] = useState(false);
   const [shareId, setShareId] = useState(null);
+  const [shareName, setShareName] = useState('Instructor');
   const [openModal, setOpenModal] = useState(false);
   const [groupId, setGroupId] = useState(null);
+  const [isShareActive, setShareActive] = useState(
+    user?.presenter ? false : true
+  );
+  const [isGroupActive, setGroupActive] = useState(false);
 
   useEffect(() => {
     socket.on('joinGroup', (data) => {
@@ -37,6 +42,19 @@ const RoomPage = ({ user, socket, users }) => {
     });
   }, []);
 
+  useEffect(() => {
+    if (shareId != null && shareId === groupId) {
+      setGroupActive(true);
+      setShareActive(false);
+    } else if (shareId != null && shareId === user.userId) {
+      setGroupActive(false);
+      setShareActive(false);
+    } else {
+      setGroupActive(false);
+      setShareActive(true);
+    }
+  }, [shareId]);
+
   const handleClearCanvas = () => {
     const canvas = canvasRef.current;
     const ctx = canvas.getContext('2d');
@@ -46,7 +64,9 @@ const RoomPage = ({ user, socket, users }) => {
   };
 
   const showWhiteBoard = () => {
-    return (shareId === null && user?.presenter) || user.userId == shareId;
+    const shareWhiteBoard =
+      (shareId === null && user?.presenter) || user.userId == shareId;
+    return shareWhiteBoard;
   };
 
   const sendGroupCreationEvent = (usersAdded, name) => {
@@ -94,8 +114,13 @@ const RoomPage = ({ user, socket, users }) => {
     setOpenModal(false);
   };
 
-  const onNameClick = (userId) => {
+  const onNameClick = (userId, userName) => {
     setShareId(userId);
+    if (userName === user.name) {
+      setShareName('Me');
+    } else {
+      setShareName(userName);
+    }
 
     socket.emit('requestBoard', {
       id: userId,
@@ -142,7 +167,7 @@ const RoomPage = ({ user, socket, users }) => {
               <p
                 key={index * 999}
                 className="my-2 text-center w-100"
-                onClick={() => onNameClick(usr.userId)}
+                onClick={() => onNameClick(usr.userId, usr.name)}
               >
                 {usr.name} {user && user.userId === usr.userId && '(You)'}
               </p>
@@ -150,42 +175,48 @@ const RoomPage = ({ user, socket, users }) => {
           </div>
         </div>
       )}
-      <h1 className="text-center py-4">White Board Sharing Application </h1>
+      <h4 className="text-center py-4">{shareName} : </h4>
       <div className="col-mid-10 mx-auto px-5 d-flex align-items-center justify-content-center">
-        <FormControl>
-          <RadioGroup
-            aria-labelledby="demo-controlled-radio-buttons-group"
-            name="controlled-radio-buttons-group"
-            onChange={(e) => setTool(e.target.value)}
-            row={true}
-          >
-            <FormControlLabel
-              value="pencil"
-              control={<Radio />}
-              label="Pencil"
-            />
-            <FormControlLabel value="line" control={<Radio />} label="Line" />
-          </RadioGroup>
-        </FormControl>
+        {(user?.presenter || !isShareActive) && (
+          <FormControl>
+            <RadioGroup
+              aria-labelledby="demo-controlled-radio-buttons-group"
+              name="controlled-radio-buttons-group"
+              onChange={(e) => setTool(e.target.value)}
+              row={true}
+            >
+              <FormControlLabel
+                value="pencil"
+                control={<Radio />}
+                label="Pencil"
+              />
+              <FormControlLabel value="line" control={<Radio />} label="Line" />
+            </RadioGroup>
+          </FormControl>
+        )}
 
-        <div className="col-md-5">
-          <div className="d-flex align-items-center justify-content-center">
-            <label htmlFor="color">Select Color: </label>
-            <input
-              type="color"
-              id="color"
-              value="{color}"
-              style={{ width: '100px' }}
-              className="mt-1 ms-3"
-              onChange={(e) => setColor(e.target.value)}
-            />
+        {(user?.presenter || !isShareActive) && (
+          <div className="col-md-5">
+            <div className="d-flex align-items-center justify-content-center">
+              <label htmlFor="color">Select Color: </label>
+              <input
+                type="color"
+                id="color"
+                value="{color}"
+                style={{ width: '100px' }}
+                className="mt-1 ms-3"
+                onChange={(e) => setColor(e.target.value)}
+              />
+            </div>
           </div>
-        </div>
-        <div className="col-md-2">
-          <button className="btn btn-danger" onClick={handleClearCanvas}>
-            Clear Board
-          </button>
-        </div>
+        )}
+        {(user?.presenter || !isShareActive) && (
+          <div className="col-md-2">
+            <button className="btn btn-danger" onClick={handleClearCanvas}>
+              Clear Board
+            </button>
+          </div>
+        )}
 
         {user?.presenter && users.length > 1 && (
           <div className="col-md-2">
@@ -208,6 +239,7 @@ const RoomPage = ({ user, socket, users }) => {
           color={color}
           user={user}
           socket={socket}
+          shareName={shareName}
         />
       ) : shareId != null && shareId === groupId ? (
         <GroupBoard
@@ -219,6 +251,7 @@ const RoomPage = ({ user, socket, users }) => {
           color={color}
           user={user}
           socket={socket}
+          shareName={shareName}
         />
       ) : (
         <ShareBoard
@@ -231,6 +264,7 @@ const RoomPage = ({ user, socket, users }) => {
           user={user}
           socket={socket}
           shareId={shareId}
+          shareName={shareName}
         />
       )}
       {canOpenModal() && (

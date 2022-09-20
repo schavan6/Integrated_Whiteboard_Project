@@ -12,7 +12,8 @@ const WhiteBoard = ({
   tool,
   color,
   user,
-  socket
+  socket,
+  shareName
 }) => {
   const [isDrawing, setIsDrawing] = useState(false);
   useEffect(() => {
