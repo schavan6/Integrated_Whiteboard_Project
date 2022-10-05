@@ -23,10 +23,14 @@ const getUser = (id) => {
   return users.find((user) => user.userId === id);
 };
 
-// get all users from the room
-
-const getUsersInRoom = (roomId) => {
+// get all userIds from the room
+const getUserIdsInRoom = (roomId) => {
   return users.filter((user) => user.roomId === roomId).map((user) => user.userId);
+};
+
+// get all users from the room
+const getUsersInRoom = (roomId) => {
+  return users.filter((user) => user.roomId === roomId);
 };
 
 module.exports = {
@@ -34,4 +38,5 @@ module.exports = {
   removeUser,
   getUser,
   getUsersInRoom,
+  getUserIdsInRoom
 };

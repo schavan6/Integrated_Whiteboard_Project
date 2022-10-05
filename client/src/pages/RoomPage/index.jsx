@@ -1,16 +1,12 @@
 import './index.css';
 import { useState, useRef, useEffect } from 'react';
+import { useNavigate } from "react-router-dom";
 import WhiteBoard from '../../components/Whiteboard';
 import ShareBoard from '../../components/ShareBoard';
 import GroupBoard from '../../components/GroupBoard';
 import CreateGroupModal from '../../components/CreateGroupModal';
 
-import {
-  FormControl,
-  RadioGroup,
-  FormControlLabel,
-  Radio
-} from '@mui/material';
+import { FormControl, FormLabel, RadioGroup, FormControlLabel, Radio, Typography, Stack, Button} from '@mui/material';
 
 const RoomPage = ({ user, socket, users }) => {
   const [tool, setTool] = useState('pencil');
@@ -33,6 +29,7 @@ const RoomPage = ({ user, socket, users }) => {
   const [isGroupActive, setGroupActive] = useState(false);
   const [screenShareId, setScreenShareId] = useState('');
   const [screenShareName, setScreenShareName] = useState('');
+  const navigate = useNavigate();
 
   useEffect(() => {
     socket.on('joinGroup', (data) => {
@@ -56,6 +53,44 @@ const RoomPage = ({ user, socket, users }) => {
       setShareActive(true);
     }
   }, [shareId]);
+
+  useEffect(() => {
+    socket.on('meetingEnded', (data) => {
+        if(user.host){
+            socket.emit("closeMeeting", data);
+        }
+        else{
+            console.log("Meeting: " + data + " Ended")
+            alert("Meeting Ended");
+            navigate(`/forms`);
+        }
+    });
+    }, []);
+
+    const handleExitMeeting = () => {
+        if(user.host){
+            fetch(`/api/sessions/${user.roomId}`)
+            .then((res) => {
+                if (res.ok){
+                    return res.json();
+                }
+            })
+            .then((jsonRes) => {
+                jsonRes.isended = true;
+                fetch(`/api/sessions/${user.roomId}`, {method: "PATCH", body: JSON.stringify(jsonRes), headers: {
+                    'Content-Type': 'application/json'} })
+            })
+            .catch((err) => console.log(err));
+            socket.emit("endMeeting", user);
+            alert("Meeting Ended");
+            navigate(`/forms`);
+        }
+        else{
+            socket.emit("exitMeeting", user);
+            alert("Exited from meeting");
+            navigate(`/forms`);
+        }
+    };
 
   const handleClearCanvas = () => {
     const canvas = canvasRef.current;
@@ -280,6 +315,14 @@ const RoomPage = ({ user, socket, users }) => {
           <div className="col-md-2">
             <button className="btn btn-danger" onClick={handleClearCanvas}>
               Clear Board
+            </button>
+          </div>
+        )}
+
+        {(user?.presenter || !isShareActive) && (
+          <div className="col-md-2">
+            <button className="btn btn-danger" onClick={handleExitMeeting}>
+            {user.host ? "End Meeting" : "Exit Meeting"}
             </button>
           </div>
         )}

@@ -1,6 +1,10 @@
 const mongoose = require('mongoose');
 
 const SessionSchema = new mongoose.Schema({
+  sessionname: {
+    type: String,
+    required: true
+  },
   hostname: {
     type: String,
     required: true
@@ -9,8 +13,16 @@ const SessionSchema = new mongoose.Schema({
     type: String,
     required: true
   },
-  sessionname: {
-    type: String,
+  isstarted: {
+    type: Boolean,
+    required: true
+  },
+  startdatetime: {
+    type: Date,
+    required: true
+  },
+  isended: {
+    type: Boolean,
     required: true
   }
 });

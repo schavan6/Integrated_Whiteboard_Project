@@ -21,7 +21,7 @@ const JoinRoomForm = ({ uuid, socket, setUser }) => {
             return res.json();
         }
     })
-    .then((jsonRes) => setSessions(jsonRes))
+    .then((jsonRes) => setSessions(jsonRes.filter(s => s.isstarted === true && s.isended === false )))
     .catch((err) => console.log(err));
 
 }, [sessions]);
@@ -61,6 +61,7 @@ const JoinRoomForm = ({ uuid, socket, setUser }) => {
           <TableRow key={session._id}>
             <TableCell>{session.hostname}</TableCell>
             <TableCell>{session.sessionname}</TableCell>
+            <TableCell>{ (new Date(session.startdatetime)).toLocaleString('en-US', { timeZone: 'America/New_York', dateStyle: 'short', timeStyle: 'short' })}</TableCell>
             <TableCell> <Button variant="contained" onClick={() => handleRoomJoin(session)}> Join </Button> </TableCell>
           </TableRow>
         ))
