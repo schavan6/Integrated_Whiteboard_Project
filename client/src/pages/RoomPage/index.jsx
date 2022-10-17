@@ -1,12 +1,22 @@
 import './index.css';
 import { useState, useRef, useEffect } from 'react';
-import { useNavigate } from "react-router-dom";
+import { useNavigate } from 'react-router-dom';
 import WhiteBoard from '../../components/Whiteboard';
 import ShareBoard from '../../components/ShareBoard';
 import GroupBoard from '../../components/GroupBoard';
+import UserList from '../../components/UserList';
 import CreateGroupModal from '../../components/CreateGroupModal';
 
-import { FormControl, FormLabel, RadioGroup, FormControlLabel, Radio, Typography, Stack, Button} from '@mui/material';
+import {
+  FormControl,
+  FormLabel,
+  RadioGroup,
+  FormControlLabel,
+  Radio,
+  Typography,
+  Stack,
+  Button
+} from '@mui/material';
 
 const RoomPage = ({ user, socket, users }) => {
   const [tool, setTool] = useState('pencil');
@@ -29,6 +39,7 @@ const RoomPage = ({ user, socket, users }) => {
   const [isGroupActive, setGroupActive] = useState(false);
   const [screenShareId, setScreenShareId] = useState('');
   const [screenShareName, setScreenShareName] = useState('');
+  const [inCall, setInCall] = useState(true);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -56,41 +67,44 @@ const RoomPage = ({ user, socket, users }) => {
 
   useEffect(() => {
     socket.on('meetingEnded', (data) => {
-        if(user.host){
-            socket.emit("closeMeeting", data);
-        }
-        else{
-            console.log("Meeting: " + data + " Ended")
-            alert("Meeting Ended");
-            navigate(`/forms`);
-        }
+      if (user.host) {
+        socket.emit('closeMeeting', data);
+      } else {
+        console.log('Meeting: ' + data + ' Ended');
+        alert('Meeting Ended');
+        navigate(`/forms`);
+      }
     });
-    }, []);
+  }, []);
 
-    const handleExitMeeting = () => {
-        if(user.host){
-            fetch(`/api/sessions/${user.roomId}`)
-            .then((res) => {
-                if (res.ok){
-                    return res.json();
-                }
-            })
-            .then((jsonRes) => {
-                jsonRes.isended = true;
-                fetch(`/api/sessions/${user.roomId}`, {method: "PATCH", body: JSON.stringify(jsonRes), headers: {
-                    'Content-Type': 'application/json'} })
-            })
-            .catch((err) => console.log(err));
-            socket.emit("endMeeting", user);
-            alert("Meeting Ended");
-            navigate(`/forms`);
-        }
-        else{
-            socket.emit("exitMeeting", user);
-            alert("Exited from meeting");
-            navigate(`/forms`);
-        }
-    };
+  const handleExitMeeting = () => {
+    if (user.host) {
+      fetch(`/api/sessions/${user.roomId}`)
+        .then((res) => {
+          if (res.ok) {
+            return res.json();
+          }
+        })
+        .then((jsonRes) => {
+          jsonRes.isended = true;
+          fetch(`/api/sessions/${user.roomId}`, {
+            method: 'PATCH',
+            body: JSON.stringify(jsonRes),
+            headers: {
+              'Content-Type': 'application/json'
+            }
+          });
+        })
+        .catch((err) => console.log(err));
+      socket.emit('endMeeting', user);
+      alert('Meeting Ended');
+      navigate(`/forms`);
+    } else {
+      socket.emit('exitMeeting', user);
+      alert('Exited from meeting');
+      navigate(`/forms`);
+    }
+  };
 
   const handleClearCanvas = () => {
     const canvas = canvasRef.current;
@@ -210,69 +224,7 @@ const RoomPage = ({ user, socket, users }) => {
             Close
           </button>
           <div className="w-100 mt-5 pt-5">
-            {users.map((usr, index) => (
-              <div>
-                <p
-                  key={index * 999}
-                  className="my-2 text-center w-100"
-                  onClick={() => onNameClick(usr.userId, usr.name)}
-                >
-                  {usr.name} {user && user.userId === usr.userId && '(You)'}
-                </p>
-
-                {user?.presenter && (
-                  <div className="dropdown" style={{ textAlign: 'center' }}>
-                    <button
-                      className="btn btn-secondary dropdown-toggle"
-                      type="button"
-                      data-bs-toggle="dropdown"
-                      aria-expanded="false"
-                    >
-                      <i className="fas fa-user"></i>
-                    </button>
-                    <ul className="dropdown-menu">
-                      {screenShareId === '' && (
-                        <li>
-                          <button
-                            className="dropdown-item"
-                            onClick={() => {
-                              shareScreen(true, usr.userId, usr.name);
-                            }}
-                          >
-                            Share
-                          </button>
-                        </li>
-                      )}
-                      {screenShareId === '' && (
-                        <li>
-                          <button
-                            className="dropdown-item"
-                            onClick={() => {
-                              shareScreen(false, usr.userId, usr.name);
-                            }}
-                          >
-                            Share Privately
-                          </button>
-                        </li>
-                      )}
-                      {screenShareId !== '' && (
-                        <li>
-                          <button
-                            className="dropdown-item"
-                            onClick={() => {
-                              stopSharing(usr.userId, usr.name);
-                            }}
-                          >
-                            Stop Sharing
-                          </button>
-                        </li>
-                      )}
-                    </ul>
-                  </div>
-                )}
-                <br />
-              </div>
-            ))}
+            {<UserList user={user} setInCall={setInCall} />}
           </div>
         </div>
       )}
@@ -322,7 +274,7 @@ const RoomPage = ({ user, socket, users }) => {
         {(user?.presenter || !isShareActive) && (
           <div className="col-md-2">
             <button className="btn btn-danger" onClick={handleExitMeeting}>
-            {user.host ? "End Meeting" : "Exit Meeting"}
+              {user.host ? 'End Meeting' : 'Exit Meeting'}
             </button>
           </div>
         )}
