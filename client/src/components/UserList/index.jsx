@@ -10,7 +10,17 @@ import Video from './Video';
 import Controls from './Controls';
 
 export default function UserList(props) {
-  const { setInCall, user } = props;
+  const {
+    user,
+    setInCall,
+    userMap,
+    screenShareId,
+    setScreenShareId,
+    setShareId,
+    setShareName,
+    setScreenShareName,
+    socket
+  } = props;
   const [users, setUsers] = useState([]);
   const [start, setStart] = useState(false);
   const client = useClient();
@@ -48,7 +58,7 @@ export default function UserList(props) {
       });
 
       try {
-        await client.join(config.appId, name, config.token, user.name);
+        await client.join(config.appId, name, config.token, user.userId);
       } catch (error) {
         console.log('error');
       }
@@ -74,7 +84,20 @@ export default function UserList(props) {
         )}
       </Grid>
       <Grid item style={{ height: '95%' }}>
-        {start && tracks && <Video tracks={tracks} users={users} />}
+        {start && tracks && (
+          <Video
+            tracks={tracks}
+            users={users}
+            userMap={userMap}
+            user={user}
+            screenShareId={screenShareId}
+            setScreenShareId={setScreenShareId}
+            setShareId={setShareId}
+            setShareName={setShareName}
+            setScreenShareName={setScreenShareName}
+            socket={socket}
+          />
+        )}
       </Grid>
     </Grid>
   );

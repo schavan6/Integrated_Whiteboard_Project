@@ -4,13 +4,45 @@ import { useState, useEffect } from 'react';
 import './index.css';
 
 export default function Video(props) {
-  const { users, tracks } = props;
+  const {
+    users,
+    tracks,
+    userMap,
+    user,
+    screenShareId,
+    setScreenShareId,
+    setShareId,
+    setShareName,
+    setScreenShareName,
+    socket
+  } = props;
   const [gridSpacing, setGridSpacing] = useState(12);
 
-  useEffect(() => {
-    setGridSpacing(Math.max(Math.floor(12 / (users.length + 1)), 4));
-    console.log(users);
-  }, [users, tracks]);
+  const onNameClick = (userId, userName) => {
+    console.log('clciked' + userId);
+    setShareId(userId);
+    if (userName === user.name) {
+      setShareName('Me');
+    } else {
+      setShareName(userName);
+    }
+
+    socket.emit('requestBoard', {
+      id: userId,
+      uid: user.userId,
+      roomId: user.roomId
+    });
+  };
+
+  const shareScreen = (isAnonymous, userId, userName) => {
+    setScreenShareId(userId);
+    setScreenShareName(userName);
+  };
+
+  const stopSharing = () => {
+    setScreenShareId('');
+    setScreenShareName('');
+  };
 
   return (
     <Grid container style={{ height: '100%' }}>
@@ -21,18 +53,23 @@ export default function Video(props) {
             style={{ height: '100%', width: '100%' }}
           />
         </Grid>
-        <p>You</p>
+        <p
+          className="my-2 w-100"
+          onClick={() => onNameClick(user.userId, user.name)}
+        >
+          You
+        </p>
       </div>
       <br />
       {users.length > 0 &&
-        users.map((user) => {
-          if (user.videoTrack) {
+        users.map((usr, index) => {
+          if (usr.videoTrack) {
             return (
-              <div>
+              <div key={usr.uid}>
                 <Grid item xs={gridSpacing}>
                   <AgoraVideoPlayer
-                    videoTrack={user.videoTrack}
-                    key={user.uid}
+                    videoTrack={usr.videoTrack}
+                    key={usr.uid}
                     style={{
                       height: '100%',
                       width: '100%',
@@ -40,7 +77,79 @@ export default function Video(props) {
                     }}
                   />
                 </Grid>
-                <p>{user.uid}</p>
+                <div>
+                  <p
+                    key={index * 999}
+                    className="my-2 "
+                    onClick={() => onNameClick(usr.uid, userMap[usr.uid].name)}
+                    style={{
+                      float: 'left',
+                      width: '50%'
+                    }}
+                  >
+                    {userMap[usr.uid].name}{' '}
+                    {user && user.userId === usr.uid && '(You)'}
+                  </p>
+
+                  {user?.presenter && (
+                    <div className="dropdown">
+                      <button
+                        className="btn btn-secondary dropdown-toggle"
+                        type="button"
+                        data-bs-toggle="dropdown"
+                        aria-expanded="false"
+                      >
+                        <i className="fas fa-user"></i>
+                      </button>
+                      <ul className="dropdown-menu">
+                        {screenShareId === '' && (
+                          <li>
+                            <button
+                              className="dropdown-item"
+                              onClick={() => {
+                                shareScreen(
+                                  true,
+                                  usr.userId,
+                                  userMap[usr.uid].name
+                                );
+                              }}
+                            >
+                              Share
+                            </button>
+                          </li>
+                        )}
+                        {screenShareId === '' && (
+                          <li>
+                            <button
+                              className="dropdown-item"
+                              onClick={() => {
+                                shareScreen(
+                                  false,
+                                  usr.userId,
+                                  userMap[usr.uid].name
+                                );
+                              }}
+                            >
+                              Share Privately
+                            </button>
+                          </li>
+                        )}
+                        {screenShareId !== '' && (
+                          <li>
+                            <button
+                              className="dropdown-item"
+                              onClick={() => {
+                                stopSharing(usr.userId, userMap[usr.uid].name);
+                              }}
+                            >
+                              Stop Sharing
+                            </button>
+                          </li>
+                        )}
+                      </ul>
+                    </div>
+                  )}
+                </div>
                 <br />
               </div>
             );

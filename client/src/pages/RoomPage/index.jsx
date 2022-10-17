@@ -12,13 +12,10 @@ import {
   FormLabel,
   RadioGroup,
   FormControlLabel,
-  Radio,
-  Typography,
-  Stack,
-  Button
+  Radio
 } from '@mui/material';
 
-const RoomPage = ({ user, socket, users }) => {
+const RoomPage = ({ user, socket, users, userMap }) => {
   const [tool, setTool] = useState('pencil');
   const [color, setColor] = useState('black');
   const canvasRef = useRef(null);
@@ -184,16 +181,6 @@ const RoomPage = ({ user, socket, users }) => {
     return user?.presenter && openModal;
   };
 
-  const shareScreen = (isAnonymous, userId, userName) => {
-    setScreenShareId(userId);
-    setScreenShareName(userName);
-  };
-
-  const stopSharing = () => {
-    setScreenShareId('');
-    setScreenShareName('');
-  };
-
   return (
     <div className="row">
       <button
@@ -219,12 +206,24 @@ const RoomPage = ({ user, socket, users }) => {
           <button
             type="button"
             onClick={() => setOpenedUserTab(false)}
-            className="btn btn-light btn-block w-100 mt-5"
+            className="btn btn-light btn-block w-100 "
           >
             Close
           </button>
-          <div className="w-100 mt-5 pt-5">
-            {<UserList user={user} setInCall={setInCall} />}
+          <div className="w-100 pt-5">
+            {
+              <UserList
+                user={user}
+                setInCall={setInCall}
+                userMap={userMap}
+                screenShareId={screenShareId}
+                setScreenShareId={setScreenShareId}
+                setShareId={setShareId}
+                setShareName={setShareName}
+                setScreenShareName={setScreenShareName}
+                socket={socket}
+              />
+            }
           </div>
         </div>
       )}

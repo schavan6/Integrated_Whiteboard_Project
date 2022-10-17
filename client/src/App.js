@@ -32,6 +32,7 @@ const socket = io(server, connectionOptions);
 const App = () => {
   const [user, setUser] = useState(null);
   const [users, setUsers] = useState([]);
+  const [userMap, setUserMap] = useState({});
 
   useEffect(() => {
     // check for token in LS when app first runs
@@ -52,6 +53,14 @@ const App = () => {
   useEffect(() => {
     socket.on('allUsers', (data) => {
       setUsers(data);
+
+      var userMap1 = {};
+
+      data.forEach(function (usr) {
+        userMap1[usr.userId] = usr;
+      });
+
+      setUserMap(userMap1);
     });
   }, []);
 
@@ -97,7 +106,12 @@ const App = () => {
               path="/:roomId"
               element={
                 <PrivateRoute>
-                  <RoomPage user={user} socket={socket} users={users} />
+                  <RoomPage
+                    user={user}
+                    socket={socket}
+                    users={users}
+                    userMap={userMap}
+                  />
                 </PrivateRoute>
               }
             />
