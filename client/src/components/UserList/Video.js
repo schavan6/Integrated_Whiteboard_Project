@@ -19,7 +19,6 @@ export default function Video(props) {
   const [gridSpacing, setGridSpacing] = useState(12);
 
   const onNameClick = (userId, userName) => {
-    console.log('clciked' + userId);
     setShareId(userId);
     if (userName === user.name) {
       setShareName('Me');
@@ -82,10 +81,6 @@ export default function Video(props) {
                     key={index * 999}
                     className="my-2 "
                     onClick={() => onNameClick(usr.uid, userMap[usr.uid].name)}
-                    style={{
-                      float: 'left',
-                      width: '50%'
-                    }}
                   >
                     {userMap[usr.uid].name}{' '}
                     {user && user.userId === usr.uid && '(You)'}
@@ -109,7 +104,7 @@ export default function Video(props) {
                               onClick={() => {
                                 shareScreen(
                                   true,
-                                  usr.userId,
+                                  usr.uid,
                                   userMap[usr.uid].name
                                 );
                               }}
@@ -125,7 +120,7 @@ export default function Video(props) {
                               onClick={() => {
                                 shareScreen(
                                   false,
-                                  usr.userId,
+                                  usr.uid,
                                   userMap[usr.uid].name
                                 );
                               }}
@@ -139,7 +134,7 @@ export default function Video(props) {
                             <button
                               className="dropdown-item"
                               onClick={() => {
-                                stopSharing(usr.userId, userMap[usr.uid].name);
+                                stopSharing(usr.uid, userMap[usr.uid].name);
                               }}
                             >
                               Stop Sharing

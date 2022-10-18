@@ -20,10 +20,13 @@ const WhiteBoard = ({
   const [imageMap, setImageMap] = useState(null);
   const [selfImage, setSelfImage] = useState('');
 
+  const listener = (data) => {
+    setImageMap(new Map(data.imgMap));
+  };
+
   useEffect(() => {
-    socket.on('whiteBoardDataResponse', (data) => {
-      setImageMap(new Map(data.imgMap));
-    });
+    socket.removeListener('whiteBoardDataResponse');
+    socket.on('whiteBoardDataResponse', listener);
   }, []);
 
   useEffect(() => {
