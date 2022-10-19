@@ -12,8 +12,8 @@ import Controls from './Controls';
 export default function UserList(props) {
   const {
     user,
+    users,
     setInCall,
-    userMap,
     screenShareId,
     setScreenShareId,
     setShareId,
@@ -21,7 +21,7 @@ export default function UserList(props) {
     setScreenShareName,
     socket
   } = props;
-  const [users, setUsers] = useState([]);
+  const [userMap, setUserMap] = useState({});
   const [start, setStart] = useState(false);
   const client = useClient();
   const { ready, tracks } = useMicrophoneAndCameraTracks();
@@ -31,9 +31,12 @@ export default function UserList(props) {
       client.on('user-published', async (user, mediaType) => {
         await client.subscribe(user, mediaType);
         if (mediaType === 'video') {
-          setUsers((prevUsers) => {
-            return [...prevUsers, user];
-          });
+          let newUser = {};
+          newUser[user.uid] = user;
+          setUserMap((userMap) => ({
+            ...userMap,
+            ...newUser
+          }));
         }
         if (mediaType === 'audio') {
           user.audioTrack.play();
@@ -45,16 +48,22 @@ export default function UserList(props) {
           if (user.audioTrack) user.audioTrack.stop();
         }
         if (mediaType === 'video') {
-          setUsers((prevUsers) => {
-            return prevUsers.filter((User) => User.uid !== user.uid);
-          });
+          let userMapCopy = { ...userMap };
+          delete userMapCopy[user.uid];
+
+          setUserMap((userMap) => ({
+            ...userMapCopy
+          }));
         }
       });
 
       client.on('user-left', (user) => {
-        setUsers((prevUsers) => {
-          return prevUsers.filter((User) => User.uid !== user.uid);
-        });
+        let userMapCopy = { ...userMap };
+        delete userMapCopy[user.uid];
+
+        setUserMap((userMap) => ({
+          ...userMapCopy
+        }));
       });
 
       try {

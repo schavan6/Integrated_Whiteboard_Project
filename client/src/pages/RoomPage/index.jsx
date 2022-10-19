@@ -15,7 +15,7 @@ import {
   Radio
 } from '@mui/material';
 
-const RoomPage = ({ user, socket, users, userMap }) => {
+const RoomPage = ({ user, socket, users }) => {
   const [tool, setTool] = useState('pencil');
   const [color, setColor] = useState('black');
   const canvasRef = useRef(null);
@@ -214,8 +214,8 @@ const RoomPage = ({ user, socket, users, userMap }) => {
             {
               <UserList
                 user={user}
+                users={users}
                 setInCall={setInCall}
-                userMap={userMap}
                 screenShareId={screenShareId}
                 setScreenShareId={setScreenShareId}
                 setShareId={setShareId}

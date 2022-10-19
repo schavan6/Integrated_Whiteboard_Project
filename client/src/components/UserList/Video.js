@@ -61,29 +61,31 @@ export default function Video(props) {
       </div>
       <br />
       {users.length > 0 &&
-        users.map((usr, index) => {
-          if (usr.videoTrack) {
+        users
+          .filter((usr) => usr.userId !== user.userId)
+          .map((usr, index) => {
             return (
               <div key={usr.uid}>
-                <Grid item xs={gridSpacing}>
-                  <AgoraVideoPlayer
-                    videoTrack={usr.videoTrack}
-                    key={usr.uid}
-                    style={{
-                      height: '100%',
-                      width: '100%',
-                      position: 'relative'
-                    }}
-                  />
-                </Grid>
+                {usr.userId in userMap && userMap[usr.userId].videoTrack && (
+                  <Grid item xs={gridSpacing}>
+                    <AgoraVideoPlayer
+                      videoTrack={userMap[usr.userId].videoTrack}
+                      key={userMap[usr.userId].uid}
+                      style={{
+                        height: '100%',
+                        width: '100%',
+                        position: 'relative'
+                      }}
+                    />
+                  </Grid>
+                )}
                 <div>
                   <p
                     key={index * 999}
                     className="my-2 "
-                    onClick={() => onNameClick(usr.uid, userMap[usr.uid].name)}
+                    onClick={() => onNameClick(usr.userId, usr.name)}
                   >
-                    {userMap[usr.uid].name}{' '}
-                    {user && user.userId === usr.uid && '(You)'}
+                    {usr.name} {user && user.userId === usr.userId && '(You)'}
                   </p>
 
                   {user?.presenter && (
@@ -102,11 +104,7 @@ export default function Video(props) {
                             <button
                               className="dropdown-item"
                               onClick={() => {
-                                shareScreen(
-                                  true,
-                                  usr.uid,
-                                  userMap[usr.uid].name
-                                );
+                                shareScreen(true, usr.userId, usr.name);
                               }}
                             >
                               Share
@@ -118,11 +116,7 @@ export default function Video(props) {
                             <button
                               className="dropdown-item"
                               onClick={() => {
-                                shareScreen(
-                                  false,
-                                  usr.uid,
-                                  userMap[usr.uid].name
-                                );
+                                shareScreen(false, usr.userId, usr.name);
                               }}
                             >
                               Share Privately
@@ -134,7 +128,7 @@ export default function Video(props) {
                             <button
                               className="dropdown-item"
                               onClick={() => {
-                                stopSharing(usr.uid, userMap[usr.uid].name);
+                                stopSharing(usr.userId, usr.name);
                               }}
                             >
                               Stop Sharing
@@ -148,8 +142,7 @@ export default function Video(props) {
                 <br />
               </div>
             );
-          } else return null;
-        })}
+          })}
     </Grid>
   );
 }
