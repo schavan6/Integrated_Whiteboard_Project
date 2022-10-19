@@ -28,11 +28,15 @@ io.on('connection', (socket) => {
     const { name, userId, roomId, host, presenter, hostId } = data;
     roomIdGlobal = roomId;
     socket.join(roomId);
-    const users = addUser({name, userId, roomId, host, presenter, hostId});
+    const users = addUser({ name, userId, roomId, host, presenter, hostId });
     socket.emit('userIsJoined', { success: true, users });
     socket.nsp.to(roomId).emit('allUsers', users);
-    socket.broadcast.to(roomId).emit('whiteBoardDataResponse', {
-      imgURL: imgURLGlobal
+    const userIdsInRoom = getUserIdsInRoom(roomId);
+    const roomMap = new Map(
+      [...userMap].filter(([k, v]) => userIdsInRoom.includes(k))
+    );
+    socket.nsp.to(data.roomId).emit('whiteBoardDataResponse', {
+      imgMap: Array.from(roomMap)
     });
   });
 
@@ -42,10 +46,9 @@ io.on('connection', (socket) => {
 
   socket.on('whiteboardData', (data) => {
     userMap.set(data.uid, data.imgurl);
-    const userIdsInRoom = getUserIdsInRoom(data.roomId)
+    const userIdsInRoom = getUserIdsInRoom(data.roomId);
     const roomMap = new Map(
-      [...userMap]
-      .filter(([k, v]) => userIdsInRoom.includes(k))
+      [...userMap].filter(([k, v]) => userIdsInRoom.includes(k))
     );
     socket.nsp.to(data.roomId).emit('whiteBoardDataResponse', {
       imgMap: Array.from(roomMap)
@@ -91,17 +94,16 @@ io.on('connection', (socket) => {
     if (user) {
       removeUser(data.userId);
       userMap.delete(data.userId);
-      const userIdsInRoom = getUserIdsInRoom(data.roomId)
+      const userIdsInRoom = getUserIdsInRoom(data.roomId);
       const roomMap = new Map(
-        [...userMap]
-        .filter(([k, v]) => userIdsInRoom.includes(k))
+        [...userMap].filter(([k, v]) => userIdsInRoom.includes(k))
       );
-      socket.broadcast.to(data.roomId).emit("whiteBoardDataResponse", {
-          imgMap: Array.from(roomMap)
-      })
-      const users = getUsersInRoom(data.roomId)
+      socket.broadcast.to(data.roomId).emit('whiteBoardDataResponse', {
+        imgMap: Array.from(roomMap)
+      });
+      const users = getUsersInRoom(data.roomId);
       socket.broadcast.to(data.roomId).emit('allUsers', users);
-      socket.leave(data.roomId)
+      socket.leave(data.roomId);
     }
   });
 
@@ -109,19 +111,18 @@ io.on('connection', (socket) => {
     console.log('endMeeting Event' + data.name);
     const user = getUser(data.userId);
     if (user) {
-      const userIdsInRoom = getUserIdsInRoom(data.roomId)
+      const userIdsInRoom = getUserIdsInRoom(data.roomId);
       userIdsInRoom.forEach((userId) => {
         removeUser(userId);
         userMap.delete(userId);
-      })
+      });
       socket.nsp.to(data.roomId).emit('meetingEnded', data.roomId);
     }
   });
 
   socket.on('closeMeeting', (data) => {
-      io.socketsLeave(data);
+    io.socketsLeave(data);
   });
-  
 });
 
 // Connect Database
