@@ -13,6 +13,14 @@ const SessionSchema = new mongoose.Schema({
     type: String,
     required: true
   },
+  courseid: {
+    type: String,
+    required: false
+  },
+  coursenumber: {
+    type: String,
+    required: false
+  },
   isstarted: {
     type: Boolean,
     required: true

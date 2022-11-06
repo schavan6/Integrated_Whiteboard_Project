@@ -82,4 +82,32 @@ router.post(
   }
 );
 
+// @route    GET api/users/userid
+// @desc     Get a user
+// @access   Private
+router.get('/:userid', async (req, res) => {
+  try {
+    const userId = req.params.userid
+    const user = await User.findById(userId); 
+    res.json(user);
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).send('Server Error');
+  }
+});
+
+// @route    PATCH api/users/userid
+// @desc     Update a user
+// @access   Private
+router.patch('/:userid', async (req, res) => {
+  try {
+    const userId = req.params.userid
+    const updatedUser = await User.findByIdAndUpdate(userId, req.body);
+    res.status(201).json(updatedUser);
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).send('Server Error');
+  }
+});
+
 module.exports = router;

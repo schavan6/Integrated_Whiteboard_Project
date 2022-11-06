@@ -6,9 +6,9 @@ import {Paper, Typography} from '@mui/material';
 
 import './index.css';
 
-const Forms = ({ auth, uuid, socket, setUser }) => {
-  return (
-    <div className="row h-100 pt-5">
+const Forms = ({ auth, uuid, socket, setUser }) => {      
+    return (
+    <Paper>
       {auth.user && auth.user.role === 'Instructor' && (
         <Paper>
           <CreateRoomForm uuid={uuid} socket={socket} setUser={setUser} />
@@ -20,8 +20,8 @@ const Forms = ({ auth, uuid, socket, setUser }) => {
           <JoinRoomForm uuid={uuid} socket={socket} setUser={setUser} />
         </Paper>
       )}
-    </div>
-  );
+    </Paper> 
+    );  
 };
 
 Forms.propTypes = {

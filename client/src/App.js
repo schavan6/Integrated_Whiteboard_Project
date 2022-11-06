@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
 import Navbar from './components/layout/Navbar';
 import Landing from './components/layout/Landing';
+import CourseList from './components/CourseList';
 import Register from './components/auth/Register';
 import Login from './components/auth/Login';
 import Alert from './components/layout/Alert';
@@ -85,6 +86,14 @@ const App = () => {
             <Route path="/" element={<Landing />} />
             <Route path="register" element={<Register />} />
             <Route path="login" element={<Login />} />
+            <Route
+              path="/courses"
+              element={
+                <PrivateRoute>
+                  <CourseList/>
+                </PrivateRoute>
+              }
+            />
             <Route
               path="/forms"
               element={

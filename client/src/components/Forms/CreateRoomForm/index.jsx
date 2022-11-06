@@ -4,11 +4,19 @@ import { useSelector } from 'react-redux';
 import { DateTimePicker } from '@mui/x-date-pickers'
 import { LocalizationProvider } from '@mui/x-date-pickers';
 import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
+import InputLabel from '@mui/material/InputLabel';
+import MenuItem from '@mui/material/MenuItem';
+import FormHelperText from '@mui/material/FormHelperText';
+import FormControl from '@mui/material/FormControl';
+import Select from '@mui/material/Select';
 import {TableContainer, Table, TableHead, TableBody, TableRow, TableCell, Paper, Button, Box, Stack, FormControlLabel, Checkbox, TextField} from '@mui/material'
 
  const CreateRoomForm = ({ uuid, socket, setUser }) => {
 
   const [roomId, setRoomId] = useState(uuid());
+  const [mounted, setMounted] = useState(true);
+  const [courses, setCourses] = useState([]);
+  const [course, setCourse] = useState('');
   const [name, setName] = useState("");
   const [startTime, setStartTime] = useState((new Date()).toISOString());
   const user = useSelector((state) => state.auth.user)
@@ -22,10 +30,16 @@ import {TableContainer, Table, TableHead, TableBody, TableRow, TableCell, Paper,
   ]);
   const [checked, setChecked] = useState(false);
 
+  const handleCourseChange = (event) => {
+    setCourse(event.target.value);
+  };
+
   useEffect(() => {
+    if(mounted) {
     fetch("/api/sessions")
     .then((res) => {
         if (res.ok){
+          setMounted(false)
             return res.json();
         }
     })
@@ -35,6 +49,18 @@ import {TableContainer, Table, TableHead, TableBody, TableRow, TableCell, Paper,
     })))
     .catch((err) => console.log(err));
 
+    fetch(`/api/courses/${user._id}`)
+    .then((res) => {
+        if (res.ok){
+          setMounted(false)
+            return res.json();
+        }
+    })
+    .then((jsonRes) => {
+      setCourses(jsonRes)
+    })
+    .catch((err) => console.log(err));
+  }
   }, [sessions]);
 
   const handleChange = (event) => {
@@ -53,13 +79,17 @@ import {TableContainer, Table, TableHead, TableBody, TableRow, TableCell, Paper,
       userId: user._id,
       host: true,
       presenter: true,
-      startTime: startTime
+      startTime: startTime,
+      courseid: course ? course._id : null,
+      coursenumber: course ? course.coursenumber : null
     };
 
     const sessionData = {
       hostname: user.name,
       hostid: user._id,
       sessionname: name,
+      courseid: course ? course._id : null,
+      coursenumber: course ? course.coursenumber : null,
       startdatetime: startTime,
       isstarted: checked,
       isended: false
@@ -82,6 +112,7 @@ import {TableContainer, Table, TableHead, TableBody, TableRow, TableCell, Paper,
         alert("Meeting scheduled successfully");
       }
     })
+    setMounted(true);
   };
 
   const handleStartMeeting = (ses) => {
@@ -94,13 +125,17 @@ import {TableContainer, Table, TableHead, TableBody, TableRow, TableCell, Paper,
       userId: user._id,
       host: true,
       presenter: true,
-      startTime: date.toISOString()
+      startTime: date.toISOString(),
+      courseid: ses.courseid,
+      coursenumber: ses.coursenumber
     };
 
     const sessionData = {
       hostname: user.name,
       hostid: user._id,
       sessionname: ses.sessionname,
+      courseid: ses.courseid,
+      coursenumber: ses.coursenumber,
       startdatetime: date.toISOString(),
       isstarted: true,
       isended: false
@@ -128,6 +163,7 @@ import {TableContainer, Table, TableHead, TableBody, TableRow, TableCell, Paper,
     <TableHead>
       <TableRow>
         <TableCell sx={{fontWeight: "bold", fontSize: 'medium'}}>Meeting Name</TableCell>
+        <TableCell sx={{fontWeight: "bold", fontSize: 'medium'}}>Course</TableCell>
         <TableCell sx={{fontWeight: "bold", fontSize: 'medium'}}>Start Time</TableCell>
         <TableCell></TableCell>
       </TableRow>
@@ -137,6 +173,7 @@ import {TableContainer, Table, TableHead, TableBody, TableRow, TableCell, Paper,
         sessions.map((session) => (
           <TableRow key={session._id}>
             <TableCell>{session.sessionname}</TableCell>
+            <TableCell>{session.coursenumber}</TableCell>
             <TableCell>{ (new Date(session.startdatetime)).toLocaleString('en-US', { timeZone: 'America/New_York', dateStyle: 'short', timeStyle: 'short' })}</TableCell>
             <TableCell> <Button variant="contained" onClick={() => handleStartMeeting(session)}> Start </Button> </TableCell>
           </TableRow>
@@ -165,6 +202,24 @@ import {TableContainer, Table, TableHead, TableBody, TableRow, TableCell, Paper,
         />
       </div>
       <div className="form-group">
+      <FormControl>
+        <InputLabel id="demo-simple-select-helper-label">Course</InputLabel>
+        <Select
+          labelId="demo-simple-select-helper-label"
+          id="demo-simple-select-helper"
+          value={course}
+          label="Course"
+          onChange={handleCourseChange}
+        >
+          <MenuItem value="">
+            <em>None</em>
+          </MenuItem>
+          {courses.map(course => (<MenuItem value={course}>{course.coursenumber}</MenuItem>))}
+        </Select>
+        <FormHelperText>Select a course</FormHelperText>
+      </FormControl>
+      </div>
+      <div className="form-group" style={{marginTop: '1rem'}}>
       <LocalizationProvider dateAdapter={AdapterDateFns}>
       <DateTimePicker label='Enter meeting time'
         renderInput={(params) => <TextField {...params} />}

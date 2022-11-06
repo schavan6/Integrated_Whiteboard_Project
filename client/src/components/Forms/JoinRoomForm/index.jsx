@@ -6,6 +6,7 @@ import {TableContainer, Table, TableHead, TableBody, TableRow, TableCell, Paper,
 
 const JoinRoomForm = ({ uuid, socket, setUser }) => {
   const [roomId, setRoomId] = useState("");
+  const [mounted, setMounted] = useState(true)
   const user = useSelector((state) => state.auth.user);
   const [sessions, setSessions] = useState([
     {
@@ -15,14 +16,20 @@ const JoinRoomForm = ({ uuid, socket, setUser }) => {
 ]);
 
   useEffect(() => {
-    fetch("/api/sessions")
-    .then((res) => {
-        if (res.ok){
-            return res.json();
-        }
-    })
-    .then((jsonRes) => setSessions(jsonRes.filter(s => s.isstarted === true && s.isended === false )))
-    .catch((err) => console.log(err));
+      if(mounted){
+      fetch("/api/sessions")
+      .then((res) => {
+          if (res.ok){
+              setMounted(false);
+              return res.json();
+          }
+      })
+      .then((jsonRes) => setSessions(jsonRes.filter(s => {
+        const date = new Date();
+        return (s.courseid == null || user.courses.includes(s.courseid)) && new Date(date.setMinutes(date.getMinutes() - 5)) <= new Date(s.startdatetime) && new Date(s.startdatetime) <=  new Date(date.setMinutes(date.getMinutes() + 15)) && s.isstarted === true && s.isended === false 
+      })))
+      .catch((err) => console.log(err));
+    }
 
 }, [sessions]);
 
@@ -52,6 +59,8 @@ const JoinRoomForm = ({ uuid, socket, setUser }) => {
       <TableRow>
         <TableCell sx={{fontWeight: "bold", fontSize: 'medium'}}>Host</TableCell>
         <TableCell sx={{fontWeight: "bold", fontSize: 'medium'}}>Meeting Name</TableCell>
+        <TableCell sx={{fontWeight: "bold", fontSize: 'medium'}}>Course</TableCell>
+        <TableCell sx={{fontWeight: "bold", fontSize: 'medium'}}>Start Time</TableCell>
         <TableCell></TableCell>
       </TableRow>
     </TableHead>
@@ -61,6 +70,7 @@ const JoinRoomForm = ({ uuid, socket, setUser }) => {
           <TableRow key={session._id}>
             <TableCell>{session.hostname}</TableCell>
             <TableCell>{session.sessionname}</TableCell>
+            <TableCell>{session.coursenumber}</TableCell>
             <TableCell>{ (new Date(session.startdatetime)).toLocaleString('en-US', { timeZone: 'America/New_York', dateStyle: 'short', timeStyle: 'short' })}</TableCell>
             <TableCell> <Button variant="contained" onClick={() => handleRoomJoin(session)}> Join </Button> </TableCell>
           </TableRow>
