@@ -1,6 +1,7 @@
 import { AgoraVideoPlayer } from 'agora-rtc-react';
 import { Grid } from '@material-ui/core';
 import { useState, useEffect } from 'react';
+import { Stack, Box, Paper } from "@mui/material";
 import './index.css';
 
 export default function Video(props) {
@@ -11,41 +12,57 @@ export default function Video(props) {
     user,
     screenShareId,
     setScreenShareId,
-    setShareId,
-    setShareName,
+    setShareUser,
     setScreenShareName,
     socket
   } = props;
   const [gridSpacing, setGridSpacing] = useState(12);
 
-  const onNameClick = (userId, userName) => {
-    setShareId(userId);
-    if (userName === user.name) {
-      setShareName('Me');
-    } else {
-      setShareName(userName);
+  const onNameClick = (usr) => {
+    if(usr.userId == user.userId || usr.userId == 'classboard' || user.host || usr.groupMembers.includes(user.userId)){
+      setShareUser(usr);
+    if (usr.name === user.name) {
+      usr.name = 'Me';
     }
+    setShareUser(usr);
 
     socket.emit('requestBoard', {
-      id: userId,
+      id: usr.userId,
       uid: user.userId,
       roomId: user.roomId
     });
+    }
   };
 
   const shareScreen = (isAnonymous, userId, userName) => {
     setScreenShareId(userId);
     setScreenShareName(userName);
+    socket.emit('updateShareId', {
+      roomId: user.roomId,
+      shareId: userId,
+      shareName: userName
+    });
   };
 
   const stopSharing = () => {
     setScreenShareId('');
     setScreenShareName('');
+    socket.emit('updateShareId', {
+      roomId: user.roomId,
+      shareId: user.hostId,
+      shareName: 'Instructor'
+    });
   };
 
   return (
-    <Grid container style={{ height: '100%' }}>
-      <div>
+    <Box container style={{ height: '100%'}}>
+      <Stack spacing={2}>
+        <p
+          className="my-2 w-100"
+          onClick={() => onNameClick({userId: 'classboard', name: 'Class Board'})}
+        >
+          Share Board
+        </p>
         <Grid item xs={gridSpacing}>
           <AgoraVideoPlayer
             videoTrack={tracks[1]}
@@ -54,18 +71,16 @@ export default function Video(props) {
         </Grid>
         <p
           className="my-2 w-100"
-          onClick={() => onNameClick(user.userId, user.name)}
+          onClick={() => onNameClick(user)}
         >
           You
         </p>
-      </div>
-      <br />
       {users.length > 0 &&
         users
           .filter((usr) => usr.userId !== user.userId)
           .map((usr, index) => {
             return (
-              <div key={usr.uid}>
+              <div>
                 {usr.userId in userMap && userMap[usr.userId].videoTrack && (
                   <Grid item xs={gridSpacing}>
                     <AgoraVideoPlayer
@@ -79,11 +94,10 @@ export default function Video(props) {
                     />
                   </Grid>
                 )}
-                <div>
                   <p
                     key={index * 999}
                     className="my-2 "
-                    onClick={() => onNameClick(usr.userId, usr.name)}
+                    onClick={() => onNameClick(usr)}
                   >
                     {usr.name} {user && user.userId === usr.userId && '(You)'}
                   </p>
@@ -138,11 +152,10 @@ export default function Video(props) {
                       </ul>
                     </div>
                   )}
-                </div>
-                <br />
-              </div>
+              </div>    
             );
           })}
-    </Grid>
+        </Stack>
+    </Box>
   );
 }

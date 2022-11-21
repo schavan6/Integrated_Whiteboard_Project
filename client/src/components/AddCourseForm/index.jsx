@@ -61,6 +61,7 @@ const AddCourseForm = ({ user, setAddClicked }) => {
         alert("Course added successfully");
         loadUser();
         setAddClicked(false);
+        window.location.reload(false);
     };
 
     const registerCourse = (courseid) => {
@@ -85,6 +86,7 @@ const AddCourseForm = ({ user, setAddClicked }) => {
             })
         alert("Course registered successfully");
         setAddClicked(false);
+        window.location.reload(false);
     };
 
     return (

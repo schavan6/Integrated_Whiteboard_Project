@@ -1,4 +1,4 @@
-import { useEffect, useState, useLayoutEffect } from 'react';
+import { useEffect, useState, useLayoutEffect, useRef } from 'react';
 import rough from 'roughjs/bundled/rough.cjs';
 import { Box } from '@mui/material';
 
@@ -7,26 +7,37 @@ const roughGenerator = rough.generator();
 const WhiteBoard = ({
   canvasRef,
   ctxRef,
-  elements,
-  setElements,
   tool,
   color,
   user,
   socket,
   screenShareId,
-  screenShareName
+  screenShareName,
+  isBoardCleared,
+  setIsBoardCleared
 }) => {
   const [isDrawing, setIsDrawing] = useState(false);
-  const [imageMap, setImageMap] = useState(null);
+  const [userImage, setUserImage] = useState(null);
   const [selfImage, setSelfImage] = useState('');
-
-  const listener = (data) => {
-    setImageMap(new Map(data.imgMap));
-  };
+  const [elements, setElements] = useState([]);
 
   useEffect(() => {
-    socket.removeListener('whiteBoardDataResponse');
-    socket.on('whiteBoardDataResponse', listener);
+    setElements([])
+  }, [isBoardCleared]);
+  
+  useEffect(() => {
+    setElements([])
+  }, []);
+
+  if(userImage == null){
+    socket.emit('getUserWhiteBoardData', user.userId);
+  }
+
+
+  useEffect(() => {
+    socket.on('userWhiteBoardResponse', (data) => {
+      setUserImage(data);
+    });
   }, []);
 
   useEffect(() => {
@@ -37,47 +48,6 @@ const WhiteBoard = ({
     });
   }, []);
 
-  useEffect(() => {
-    if (ctxRef && ctxRef.current) {
-      const canvasImage = canvasRef.current.toDataURL();
-      setSelfImage(canvasImage);
-      ctxRef.current.clearRect(
-        0,
-        0,
-        canvasRef.current.width,
-        canvasRef.current.height
-      );
-    }
-    if (screenShareId !== '') {
-      setIsDrawing(false);
-
-      if (imageMap !== null && imageMap.has(screenShareId)) {
-        drawImageOnCanvas(imageMap.get(screenShareId));
-      }
-    } else {
-      drawElements();
-    }
-  }, [screenShareId]);
-
-  useLayoutEffect(() => {
-    if (
-      screenShareId !== '' &&
-      imageMap !== null &&
-      imageMap.has(screenShareId)
-    ) {
-      socket.emit('whiteboardData', {
-        imgurl: imageMap.get(screenShareId),
-        uid: user.userId,
-        roomId: user.roomId
-      });
-    } else if (imageMap !== null && imageMap.has(user.userId)) {
-      socket.emit('whiteboardData', {
-        imgurl: selfImage,
-        uid: user.userId,
-        roomId: user.roomId
-      });
-    }
-  }, [screenShareId]);
   useEffect(() => {
     const canvas = canvasRef.current;
     canvas.height = window.innerHeight;
@@ -93,8 +63,15 @@ const WhiteBoard = ({
 
   useEffect(() => {
     if (canvasRef) {
-      drawElements();
+      if(isBoardCleared) {
+        setElements([]);
+        setIsBoardCleared(false);
+      }
+      if (userImage !== null){
+        drawImageOnCanvas(userImage);
+      }
       if (elements.length > 0) {
+        drawElements();
         const canvasImage = canvasRef.current.toDataURL();
         socket.emit('whiteboardData', {
           imgurl: canvasImage,
@@ -104,6 +81,12 @@ const WhiteBoard = ({
       }
     }
   }, [elements]);
+
+  useEffect(() => {
+    if (userImage !== null) {
+      drawImageOnCanvas(userImage);
+    }
+  }, [userImage])
 
   const drawElements = () => {
     if (canvasRef) {
@@ -136,7 +119,6 @@ const WhiteBoard = ({
   };
 
   const handleMouseDown = (e) => {
-    if (screenShareId === '') {
       const { offsetX, offsetY } = e.nativeEvent;
       if (tool == 'pencil') {
         setElements((prevElements) => [
@@ -163,7 +145,6 @@ const WhiteBoard = ({
         ]);
       }
       setIsDrawing(true);
-    }
   };
 
   const drawImageOnCanvas = (url) => {

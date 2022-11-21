@@ -2,8 +2,8 @@ const users = [];
 
 // Add a user to the list
 
-const addUser = ({ name, userId, roomId, host, presenter, hostId}) => {
-  const user = { name, userId, roomId, host, presenter};
+const addUser = ({ name, userId, roomId, host, presenter, hostId, isGroup, groupMembers}) => {
+  const user = { name, userId, roomId, host, presenter, isGroup, groupMembers};
   users.push(user);
   return users.filter((user) => user.roomId === roomId);
 };

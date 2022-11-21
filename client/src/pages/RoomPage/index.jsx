@@ -3,9 +3,11 @@ import { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import WhiteBoard from '../../components/Whiteboard';
 import ShareBoard from '../../components/ShareBoard';
+import ClassBoard from '../../components/ClassBoard';
 import GroupBoard from '../../components/GroupBoard';
 import UserList from '../../components/UserList';
 import CreateGroupModal from '../../components/CreateGroupModal';
+import { Stack, Paper } from '@mui/material';
 
 import {
   FormControl,
@@ -26,6 +28,8 @@ const RoomPage = ({ user, socket, users }) => {
   const [sharedElements, setSharedElements] = useState([]);
   const [groupElements, setGroupElements] = useState([]);
   const [openedUserTab, setOpenedUserTab] = useState(false);
+  const [isBoardCleared, setIsBoardCleared] = useState(false);
+  const [shareUser, setShareUser] = useState(user);
   const [shareId, setShareId] = useState(null);
   const [shareName, setShareName] = useState('Instructor');
   const [openModal, setOpenModal] = useState(false);
@@ -36,6 +40,7 @@ const RoomPage = ({ user, socket, users }) => {
   const [isGroupActive, setGroupActive] = useState(false);
   const [screenShareId, setScreenShareId] = useState('');
   const [screenShareName, setScreenShareName] = useState('');
+  const [shareBoardName, setShareBoardName] = useState('');
   const [inCall, setInCall] = useState(true);
   const navigate = useNavigate();
 
@@ -48,19 +53,6 @@ const RoomPage = ({ user, socket, users }) => {
       }
     });
   }, []);
-
-  useEffect(() => {
-    if (shareId != null && shareId === groupId) {
-      setGroupActive(true);
-      setShareActive(false);
-    } else if (shareId != null && shareId === user.userId) {
-      setGroupActive(false);
-      setShareActive(false);
-    } else {
-      setGroupActive(false);
-      setShareActive(true);
-    }
-  }, [shareId]);
 
   useEffect(() => {
     socket.on('meetingEnded', (data) => {
@@ -109,11 +101,17 @@ const RoomPage = ({ user, socket, users }) => {
     ctx.fillRect = 'white';
     ctx.clearRect(0, 0, canvasRef.current.width, canvasRef.current.height);
     setElements([]);
+    setIsBoardCleared(true)
+    socket.emit('whiteboardData', {
+      imgurl: null,
+      uid: shareUser.userId,
+      roomId: user.roomId
+    });
   };
 
   const showWhiteBoard = () => {
     const shareWhiteBoard =
-      (shareId === null && user?.presenter) || user.userId == shareId;
+      (shareUser.userId === null && user?.presenter) || user.userId == shareUser.userId;
     return shareWhiteBoard;
   };
 
@@ -126,6 +124,8 @@ const RoomPage = ({ user, socket, users }) => {
       userId: newUserId,
       host: false,
       presenter: false,
+      isGroup: false,
+      groupMembers: usersAdded,
       hostId: user.userId
     };
     socket.emit('userJoined', roomData);
@@ -162,54 +162,13 @@ const RoomPage = ({ user, socket, users }) => {
     setOpenModal(false);
   };
 
-  const onNameClick = (userId, userName) => {
-    setShareId(userId);
-    if (userName === user.name) {
-      setShareName('Me');
-    } else {
-      setShareName(userName);
-    }
-
-    socket.emit('requestBoard', {
-      id: userId,
-      uid: user.userId,
-      roomId: user.roomId
-    });
-  };
-
   const canOpenModal = () => {
     return user?.presenter && openModal;
   };
 
   return (
-    <div className="row">
-      <button
-        type="button"
-        className="btn btn-dark"
-        style={{
-          display: 'block',
-          position: 'absolute',
-          top: '10%',
-          left: '5%',
-          height: '40px',
-          width: '120px'
-        }}
-        onClick={() => setOpenedUserTab(true)}
-      >
-        Participants
-      </button>
-      {openedUserTab && (
-        <div
-          className="position-fixed top-0 h-100 text-white bg-dark"
-          style={{ width: '250px', left: '0%', zIndex: 999 }}
-        >
-          <button
-            type="button"
-            onClick={() => setOpenedUserTab(false)}
-            className="btn btn-light btn-block w-100 "
-          >
-            Close
-          </button>
+    <Stack direction="row" spacing={30} >
+        <Paper className="position-fixed top-0 h-100 text-white bg-dark" sx={{width: '250px', overflow: 'auto'}}>
           <div className="w-100 pt-5">
             {
               <UserList
@@ -218,18 +177,19 @@ const RoomPage = ({ user, socket, users }) => {
                 setInCall={setInCall}
                 screenShareId={screenShareId}
                 setScreenShareId={setScreenShareId}
-                setShareId={setShareId}
-                setShareName={setShareName}
+                setShareUser={setShareUser}
                 setScreenShareName={setScreenShareName}
                 socket={socket}
               />
             }
           </div>
-        </div>
-      )}
-      <h4 className="text-center py-4">{shareName} : </h4>
+        </Paper>
+      <div>
+      { shareUser.userId === 'classboard' ?
+      <h4 className="text-center py-4"> {shareUser.name} : {shareBoardName} </h4> :
+      <h4 className="text-center py-4"> {shareUser.name} : </h4> }
       <div className="col-mid-10 mx-auto px-5 d-flex align-items-center justify-content-center">
-        {(user?.presenter || !isShareActive) && (
+        {(shareUser.userId !== 'classboard') && (
           <FormControl>
             <RadioGroup
               aria-labelledby="demo-controlled-radio-buttons-group"
@@ -247,7 +207,7 @@ const RoomPage = ({ user, socket, users }) => {
           </FormControl>
         )}
 
-        {(user?.presenter || !isShareActive) && (
+        {(shareUser.userId !== 'classboard') && (
           <div className="col-md-5">
             <div className="d-flex align-items-center justify-content-center">
               <label htmlFor="color">Select Color: </label>
@@ -262,7 +222,7 @@ const RoomPage = ({ user, socket, users }) => {
             </div>
           </div>
         )}
-        {(user?.presenter || !isShareActive) && (
+        {(shareUser.userId !== 'classboard') && (
           <div className="col-md-2">
             <button className="btn btn-danger" onClick={handleClearCanvas}>
               Clear Board
@@ -270,7 +230,7 @@ const RoomPage = ({ user, socket, users }) => {
           </div>
         )}
 
-        {(user?.presenter || !isShareActive) && (
+        {(shareUser.userId !== 'classboard') && (
           <div className="col-md-2">
             <button className="btn btn-danger" onClick={handleExitMeeting}>
               {user.host ? 'End Meeting' : 'Exit Meeting'}
@@ -289,45 +249,39 @@ const RoomPage = ({ user, socket, users }) => {
           </div>
         )}
       </div>
-      {showWhiteBoard() ? (
+      {  shareUser.userId === 'classboard' ? (
+        <ClassBoard
+         user={user}
+         socket={socket}
+         setShareBoardName={setShareBoardName}
+        />
+      ) :
+      showWhiteBoard() ? (
         <WhiteBoard
           canvasRef={canvasRef}
           ctxRef={ctxRef}
-          elements={elements}
-          setElements={setElements}
           tool={tool}
           color={color}
           user={user}
           socket={socket}
           screenShareId={screenShareId}
           screenShareName={screenShareName}
+          isBoardCleared={isBoardCleared}
+          setIsBoardCleared={setIsBoardCleared}
         />
-      ) : shareId != null && shareId === groupId ? (
-        <GroupBoard
-          canvasRef={sharedCanvasRef}
-          ctxRef={sharedCtxRef}
-          elements={groupElements}
-          setElements={setGroupElements}
-          tool={tool}
-          color={color}
-          user={user}
-          socket={socket}
-          shareName={shareName}
-        />
-      ) : (
+      ) 
+      : (
         <ShareBoard
           canvasRef={sharedCanvasRef}
           ctxRef={sharedCtxRef}
-          elements={sharedElements}
-          setElements={setSharedElements}
           tool={tool}
           color={color}
           user={user}
           socket={socket}
-          shareId={shareId}
-          shareName={shareName}
+          shareUser={shareUser}
         />
-      )}
+      ) 
+    }
       {canOpenModal() && (
         <CreateGroupModal
           sendGroupCreationEvent={sendGroupCreationEvent}
@@ -336,7 +290,8 @@ const RoomPage = ({ user, socket, users }) => {
           user={user}
         />
       )}
-    </div>
+      </div>
+    </Stack>
   );
 };
 

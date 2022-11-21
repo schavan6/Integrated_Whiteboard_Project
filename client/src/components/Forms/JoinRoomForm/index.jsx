@@ -44,6 +44,8 @@ const JoinRoomForm = ({ uuid, socket, setUser }) => {
       userId:  user._id,
       host: false,
       presenter: false,
+      isGroup: false,
+      groupMembers: [],
       hostId: session.hostid
     };
     setUser(roomData);

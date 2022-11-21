@@ -18,6 +18,7 @@ export default function UserList(props) {
     setScreenShareId,
     setShareId,
     setShareName,
+    setShareUser,
     setScreenShareName,
     socket
   } = props;
@@ -103,6 +104,7 @@ export default function UserList(props) {
             setScreenShareId={setScreenShareId}
             setShareId={setShareId}
             setShareName={setShareName}
+            setShareUser={setShareUser}
             setScreenShareName={setScreenShareName}
             socket={socket}
           />

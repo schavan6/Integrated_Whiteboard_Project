@@ -7,16 +7,19 @@ const roughGenerator = rough.generator();
 const ShareBoard = ({
   canvasRef,
   ctxRef,
-  elements,
-  setElements,
   tool,
   color,
   user,
   socket,
-  shareId
+  shareUser
 }) => {
   const [imageMap, setImageMap] = useState(null);
   const [isDrawing, setIsDrawing] = useState(false);
+  const [elements, setElements] = useState([]);
+
+  if(imageMap == null){
+    socket.emit('getWhiteBoardData', user.roomId);
+  }
 
   useEffect(() => {
     socket.on('whiteBoardDataResponse', (data) => {
@@ -49,23 +52,12 @@ const ShareBoard = ({
   }, []);
 
   useEffect(() => {
-    if (!user?.presenter && imageMap != null) {
-      if (ctxRef && ctxRef.current) {
-        ctxRef.current.clearRect(
-          0,
-          0,
-          canvasRef.current.width,
-          canvasRef.current.height
-        );
-        drawImageOnCanvas(imageMap.get(user.hostId));
-      }
-    } else if (user?.presenter && shareId !== null && imageMap !== null) {
-      drawImageOnCanvas(imageMap.get(shareId));
+    if (shareUser !== null && imageMap !== null) {
+      drawImageOnCanvas(imageMap.get(shareUser.userId));
     }
   }, [imageMap]);
 
   useEffect(() => {
-    if (user?.presenter) {
       ctxRef.current.clearRect(
         0,
         0,
@@ -73,8 +65,38 @@ const ShareBoard = ({
         canvasRef.current.height
       );
       setElements([]);
+  }, [shareUser.userId]);
+
+
+  const drawElements = () => {
+    if (canvasRef) {
+      const roughCanvas = rough.canvas(canvasRef.current);
+
+      elements.forEach((element) => {
+        if (element.type == 'line') {
+          roughCanvas.draw(
+            roughGenerator.line(
+              element.offsetX,
+              element.offsetY,
+              element.width,
+              element.height,
+              {
+                stroke: element.stroke,
+                strokeWidth: 5,
+                roughness: 0
+              }
+            )
+          );
+        } else if (element.type == 'pencil') {
+          roughCanvas.linearPath(element.path, {
+            stroke: element.stroke,
+            strokeWidth: 5,
+            roughness: 0
+          });
+        }
+      });
     }
-  }, [shareId]);
+  };
 
   const handleMouseDown = (e) => {
     const { offsetX, offsetY } = e.nativeEvent;
@@ -148,40 +170,25 @@ const ShareBoard = ({
 
   useEffect(() => {
     if (canvasRef) {
-      const roughCanvas = rough.canvas(canvasRef.current);
+      if (shareUser !== null && imageMap !== null) {
+        drawImageOnCanvas(imageMap.get(shareUser.userId));
+      }
 
-      elements.forEach((element) => {
-        if (element.type == 'line') {
-          roughCanvas.draw(
-            roughGenerator.line(
-              element.offsetX,
-              element.offsetY,
-              element.width,
-              element.height,
-              {
-                stroke: element.stroke,
-                strokeWidth: 5,
-                roughness: 0
-              }
-            )
-          );
-        } else if (element.type == 'pencil') {
-          roughCanvas.linearPath(element.path, {
-            stroke: element.stroke,
-            strokeWidth: 5,
-            roughness: 0
+      if (elements.length > 0) {
+        drawElements();
+        const canvasImage = canvasRef.current.toDataURL();
+          if(shareUser.isGroup === false){
+            socket.emit('sharedWhiteboardData', {
+              imgurl: canvasImage,
+              receiver: shareUser.userId,
+              roomId: user.roomId
+            });
+          }
+          socket.emit('whiteboardData', {
+            imgurl: canvasImage,
+            uid: shareUser.userId,
+            roomId: user.roomId
           });
-        }
-      });
-
-      const canvasImage = canvasRef.current.toDataURL();
-
-      if (user?.presenter && shareId != null && elements.length > 0) {
-        socket.emit('sharedWhiteboardData', {
-          imgurl: canvasImage,
-          roomId: user.roomId,
-          receiver: shareId
-        });
       }
     }
   }, [elements]);

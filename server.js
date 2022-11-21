@@ -23,18 +23,23 @@ app.use(cors());
 
 let roomIdGlobal, imgURLGlobal;
 let userMap = new Map();
+let shareMap = new Map();
 io.on('connection', (socket) => {
   socket.on('userJoined', (data) => {
-    const { name, userId, roomId, host, presenter, hostId } = data;
+    const { name, userId, roomId, host, presenter, hostId, isGroup, groupMembers} = data;
     roomIdGlobal = roomId;
     socket.join(roomId);
-    const users = addUser({ name, userId, roomId, host, presenter, hostId });
+    const users = addUser({ name, userId, roomId, host, presenter, hostId, isGroup, groupMembers });
     socket.emit('userIsJoined', { success: true, users });
     socket.nsp.to(roomId).emit('allUsers', users);
+    if (host){
+      shareMap.set(roomId, {userId: userId, userName: name});
+    }
     const userIdsInRoom = getUserIdsInRoom(roomId);
     const roomMap = new Map(
       [...userMap].filter(([k, v]) => userIdsInRoom.includes(k))
     );
+    socket.nsp.to(data.roomId).emit('shareIdResponse', shareMap.get(data.roomId))
     socket.nsp.to(data.roomId).emit('whiteBoardDataResponse', {
       imgMap: Array.from(roomMap)
     });
@@ -123,6 +128,36 @@ io.on('connection', (socket) => {
   socket.on('closeMeeting', (data) => {
     io.socketsLeave(data);
   });
+
+  socket.on('updateShareId', (data) => {
+    shareMap.set(data.roomId, {userId : data.shareId, userName: data.shareName})
+    socket.nsp.to(data.roomId).emit('shareIdResponse', shareMap.get(data.roomId))
+  })
+
+  socket.on('getShareId', (data) => {
+    socket.emit('shareIdResponse', shareMap.get(data));
+  })
+
+
+  socket.on('getWhiteBoardData', (data) => {
+    const userIdsInRoom = getUserIdsInRoom(data);
+    const roomMap = new Map(
+      [...userMap].filter(([k, v]) => userIdsInRoom.includes(k))
+    );
+    socket.nsp.to(data).emit('whiteBoardDataResponse', {
+      imgMap: Array.from(roomMap)
+    });
+  })
+
+  socket.on('getUserWhiteBoardData', (data) => {
+    if (userMap.has(data)){
+      socket.emit('userWhiteBoardResponse', userMap.get(data));
+    }
+    else {
+      socket.emit('userWhiteBoardResponse', null);
+    }
+  })
+
 });
 
 // Connect Database
