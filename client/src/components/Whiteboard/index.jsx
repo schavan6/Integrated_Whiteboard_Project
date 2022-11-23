@@ -19,26 +19,87 @@ const WhiteBoard = ({
   const [isDrawing, setIsDrawing] = useState(false);
   const [userImage, setUserImage] = useState(null);
   const [selfImage, setSelfImage] = useState('');
+  const [hasInput, setHasInput] = useState(false);
   const [elements, setElements] = useState([]);
 
   useEffect(() => {
-    setElements([])
+    setElements([]);
   }, [isBoardCleared]);
-  
+
   useEffect(() => {
-    setElements([])
+    setElements([]);
   }, []);
 
-  if(userImage == null){
+  if (userImage == null) {
     socket.emit('getUserWhiteBoardData', user.userId);
   }
-
 
   useEffect(() => {
     socket.on('userWhiteBoardResponse', (data) => {
       setUserImage(data);
     });
+    if (canvasRef && canvasRef.current) {
+      canvasRef.current.addEventListener(
+        'dblclick',
+        function (e) {
+          e.preventDefault();
+          if (!hasInput) {
+            addInput(e.clientX, e.clientY);
+          }
+        },
+        false
+      );
+    }
   }, []);
+
+  var addInput = (x, y) => {
+    var input = document.createElement('textarea');
+
+    //input.type = "text";
+    input.style.position = 'fixed';
+    input.style.left = x + 'px';
+    input.style.top = y + 'px';
+
+    input.onkeydown = handleEnter;
+
+    document.body.appendChild(input);
+
+    input.focus();
+    setHasInput(true);
+  };
+
+  //Key handler for input box:
+  const handleEnter = function (e) {
+    var keyCode = e.keyCode;
+    if (keyCode === 13) {
+      drawText(
+        this.value,
+        parseInt(this.style.left, 10),
+        parseInt(this.style.top, 10)
+      );
+
+      document.body.removeChild(this);
+      setHasInput(false);
+
+      const canvasImage = canvasRef.current.toDataURL();
+      setSelfImage(canvasImage);
+
+      socket.emit('whiteboardData', {
+        imgurl: canvasImage,
+        uid: user.userId,
+        roomId: user.roomId
+      });
+    }
+  };
+
+  //Draw the text onto canvas:
+  var drawText = function (txt, x, y) {
+    ctxRef.current.textBaseline = 'top';
+    ctxRef.current.textAlign = 'left';
+    ctxRef.current.font = '25px sans-serif';
+
+    ctxRef.current.fillText(txt, x - 255, y - 215);
+  };
 
   useEffect(() => {
     socket.on('sharedWhiteBoardDataResponse', (data) => {
@@ -50,8 +111,8 @@ const WhiteBoard = ({
 
   useEffect(() => {
     const canvas = canvasRef.current;
-    canvas.height = window.innerHeight;
-    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight - 250;
+    canvas.width = window.innerWidth - 286;
     const ctx = canvas.getContext('2d');
 
     ctx.strokeStyle = color;
@@ -63,11 +124,11 @@ const WhiteBoard = ({
 
   useEffect(() => {
     if (canvasRef) {
-      if(isBoardCleared) {
+      if (isBoardCleared) {
         setElements([]);
         setIsBoardCleared(false);
       }
-      if (userImage !== null){
+      if (userImage !== null) {
         drawImageOnCanvas(userImage);
       }
       if (elements.length > 0) {
@@ -86,7 +147,7 @@ const WhiteBoard = ({
     if (userImage !== null) {
       drawImageOnCanvas(userImage);
     }
-  }, [userImage])
+  }, [userImage]);
 
   const drawElements = () => {
     if (canvasRef) {
@@ -119,32 +180,32 @@ const WhiteBoard = ({
   };
 
   const handleMouseDown = (e) => {
-      const { offsetX, offsetY } = e.nativeEvent;
-      if (tool == 'pencil') {
-        setElements((prevElements) => [
-          ...prevElements,
-          {
-            type: 'pencil',
-            offsetX,
-            offsetY,
-            path: [[offsetX, offsetY]],
-            stroke: color
-          }
-        ]);
-      } else if (tool == 'line') {
-        setElements((prevElements) => [
-          ...prevElements,
-          {
-            type: 'line',
-            offsetX,
-            offsetY,
-            width: offsetX,
-            height: offsetY,
-            stroke: color
-          }
-        ]);
-      }
-      setIsDrawing(true);
+    const { offsetX, offsetY } = e.nativeEvent;
+    if (tool == 'pencil') {
+      setElements((prevElements) => [
+        ...prevElements,
+        {
+          type: 'pencil',
+          offsetX,
+          offsetY,
+          path: [[offsetX, offsetY]],
+          stroke: color
+        }
+      ]);
+    } else if (tool == 'line') {
+      setElements((prevElements) => [
+        ...prevElements,
+        {
+          type: 'line',
+          offsetX,
+          offsetY,
+          width: offsetX,
+          height: offsetY,
+          stroke: color
+        }
+      ]);
+    }
+    setIsDrawing(true);
   };
 
   const drawImageOnCanvas = (url) => {

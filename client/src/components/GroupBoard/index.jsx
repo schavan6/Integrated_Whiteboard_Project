@@ -33,8 +33,8 @@ const GroupBoard = ({
 
   useEffect(() => {
     const canvas = canvasRef.current;
-    canvas.height = window.innerHeight * 2;
-    canvas.width = window.innerWidth * 2;
+    canvas.height = window.innerHeight - 250;
+    canvas.width = window.innerWidth - 286;
     const ctx = canvas.getContext('2d');
 
     ctx.strokeStyle = color;

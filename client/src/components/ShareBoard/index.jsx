@@ -16,8 +16,9 @@ const ShareBoard = ({
   const [imageMap, setImageMap] = useState(null);
   const [isDrawing, setIsDrawing] = useState(false);
   const [elements, setElements] = useState([]);
+  const [hasInput, setHasInput] = useState(false);
 
-  if(imageMap == null){
+  if (imageMap == null) {
     socket.emit('getWhiteBoardData', user.roomId);
   }
 
@@ -25,7 +26,73 @@ const ShareBoard = ({
     socket.on('whiteBoardDataResponse', (data) => {
       setImageMap(new Map(data.imgMap));
     });
+    if (canvasRef && canvasRef.current) {
+      canvasRef.current.addEventListener(
+        'dblclick',
+        function (e) {
+          e.preventDefault();
+          if (!hasInput) {
+            addInput(e.clientX, e.clientY);
+          }
+        },
+        false
+      );
+    }
   }, []);
+  var addInput = (x, y) => {
+    var input = document.createElement('textarea');
+
+    //input.type = "text";
+    input.style.position = 'fixed';
+    input.style.left = x + 'px';
+    input.style.top = y + 'px';
+
+    input.onkeydown = handleEnter;
+
+    document.body.appendChild(input);
+
+    input.focus();
+    setHasInput(true);
+  };
+
+  //Key handler for input box:
+  const handleEnter = function (e) {
+    var keyCode = e.keyCode;
+    if (keyCode === 13) {
+      drawText(
+        this.value,
+        parseInt(this.style.left, 10),
+        parseInt(this.style.top, 10)
+      );
+
+      document.body.removeChild(this);
+      setHasInput(false);
+
+      const canvasImage = canvasRef.current.toDataURL();
+
+      socket.emit('whiteboardData', {
+        imgurl: canvasImage,
+        uid: user.userId,
+        roomId: user.roomId
+      });
+      if (shareUser.isGroup === false) {
+        socket.emit('sharedWhiteboardData', {
+          imgurl: canvasImage,
+          receiver: shareUser.userId,
+          roomId: user.roomId
+        });
+      }
+    }
+  };
+
+  //Draw the text onto canvas:
+  var drawText = function (txt, x, y) {
+    ctxRef.current.textBaseline = 'top';
+    ctxRef.current.textAlign = 'left';
+    ctxRef.current.font = '25px sans-serif';
+
+    ctxRef.current.fillText(txt, x - 255, y - 215);
+  };
 
   const drawImageOnCanvas = (url) => {
     if (ctxRef && ctxRef.current) {
@@ -40,8 +107,8 @@ const ShareBoard = ({
 
   useEffect(() => {
     const canvas = canvasRef.current;
-    canvas.height = window.innerHeight * 2;
-    canvas.width = window.innerWidth * 2;
+    canvas.height = window.innerHeight - 250;
+    canvas.width = window.innerWidth - 286;
     const ctx = canvas.getContext('2d');
 
     ctx.strokeStyle = color;
@@ -58,15 +125,14 @@ const ShareBoard = ({
   }, [imageMap]);
 
   useEffect(() => {
-      ctxRef.current.clearRect(
-        0,
-        0,
-        canvasRef.current.width,
-        canvasRef.current.height
-      );
-      setElements([]);
+    ctxRef.current.clearRect(
+      0,
+      0,
+      canvasRef.current.width,
+      canvasRef.current.height
+    );
+    setElements([]);
   }, [shareUser.userId]);
-
 
   const drawElements = () => {
     if (canvasRef) {
@@ -177,18 +243,18 @@ const ShareBoard = ({
       if (elements.length > 0) {
         drawElements();
         const canvasImage = canvasRef.current.toDataURL();
-          if(shareUser.isGroup === false){
-            socket.emit('sharedWhiteboardData', {
-              imgurl: canvasImage,
-              receiver: shareUser.userId,
-              roomId: user.roomId
-            });
-          }
-          socket.emit('whiteboardData', {
+        if (shareUser.isGroup === false) {
+          socket.emit('sharedWhiteboardData', {
             imgurl: canvasImage,
-            uid: shareUser.userId,
+            receiver: shareUser.userId,
             roomId: user.roomId
           });
+        }
+        socket.emit('whiteboardData', {
+          imgurl: canvasImage,
+          uid: shareUser.userId,
+          roomId: user.roomId
+        });
       }
     }
   }, [elements]);

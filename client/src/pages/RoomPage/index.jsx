@@ -101,7 +101,7 @@ const RoomPage = ({ user, socket, users }) => {
     ctx.fillRect = 'white';
     ctx.clearRect(0, 0, canvasRef.current.width, canvasRef.current.height);
     setElements([]);
-    setIsBoardCleared(true)
+    setIsBoardCleared(true);
     socket.emit('whiteboardData', {
       imgurl: null,
       uid: shareUser.userId,
@@ -111,7 +111,8 @@ const RoomPage = ({ user, socket, users }) => {
 
   const showWhiteBoard = () => {
     const shareWhiteBoard =
-      (shareUser.userId === null && user?.presenter) || user.userId == shareUser.userId;
+      (shareUser.userId === null && user?.presenter) ||
+      user.userId == shareUser.userId;
     return shareWhiteBoard;
   };
 
@@ -167,129 +168,116 @@ const RoomPage = ({ user, socket, users }) => {
   };
 
   return (
-    <Stack direction="row" spacing={30} >
-        <Paper className="position-fixed top-0 h-100 text-white bg-dark" sx={{width: '250px', overflow: 'auto'}}>
-          <div className="w-100 pt-5">
-            {
-              <UserList
-                user={user}
-                users={users}
-                setInCall={setInCall}
-                screenShareId={screenShareId}
-                setScreenShareId={setScreenShareId}
-                setShareUser={setShareUser}
-                setScreenShareName={setScreenShareName}
-                socket={socket}
-              />
-            }
-          </div>
-        </Paper>
-      <div>
-      { shareUser.userId === 'classboard' ?
-      <h4 className="text-center py-4"> {shareUser.name} : {shareBoardName} </h4> :
-      <h4 className="text-center py-4"> {shareUser.name} : </h4> }
-      <div className="col-mid-10 mx-auto px-5 d-flex align-items-center justify-content-center">
-        {(shareUser.userId !== 'classboard') && (
-          <FormControl>
-            <RadioGroup
-              aria-labelledby="demo-controlled-radio-buttons-group"
-              name="controlled-radio-buttons-group"
-              onChange={(e) => setTool(e.target.value)}
-              row={true}
-            >
-              <FormControlLabel
-                value="pencil"
-                control={<Radio />}
-                label="Pencil"
-              />
-              <FormControlLabel value="line" control={<Radio />} label="Line" />
-            </RadioGroup>
-          </FormControl>
+    <Stack direction="row" spacing={30}>
+      <Paper
+        className="position-fixed top-0 h-100 text-white bg-dark"
+        sx={{ width: '250px', overflow: 'auto' }}
+      >
+        <div className="w-100 pt-5">
+          {
+            <UserList
+              user={user}
+              users={users}
+              setInCall={setInCall}
+              screenShareId={screenShareId}
+              setScreenShareId={setScreenShareId}
+              setShareUser={setShareUser}
+              setScreenShareName={setScreenShareName}
+              socket={socket}
+            />
+          }
+        </div>
+      </Paper>
+      <div style={{ 'margin-left': '255px' }}>
+        {shareUser.userId === 'classboard' ? (
+          <h4 className="text-center py-4">
+            {' '}
+            {shareUser.name} : {shareBoardName}{' '}
+          </h4>
+        ) : (
+          <h4 className="text-center py-4"> {shareUser.name} : </h4>
         )}
-
-        {(shareUser.userId !== 'classboard') && (
-          <div className="col-md-5">
-            <div className="d-flex align-items-center justify-content-center">
-              <label htmlFor="color">Select Color: </label>
-              <input
-                type="color"
-                id="color"
-                value="{color}"
-                style={{ width: '100px' }}
-                className="mt-1 ms-3"
-                onChange={(e) => setColor(e.target.value)}
-              />
+        <div className="col-mid-10 mx-auto px-5 d-flex align-items-center justify-content-center">
+          {shareUser.userId !== 'classboard' && (
+            <div className="col-md-5">
+              <div className="d-flex align-items-center justify-content-center">
+                <label htmlFor="color">Select Color: </label>
+                <input
+                  type="color"
+                  id="color"
+                  value="{color}"
+                  style={{ width: '100px' }}
+                  className="mt-1 ms-3"
+                  onChange={(e) => setColor(e.target.value)}
+                />
+              </div>
             </div>
-          </div>
-        )}
-        {(shareUser.userId !== 'classboard') && (
-          <div className="col-md-2">
-            <button className="btn btn-danger" onClick={handleClearCanvas}>
-              Clear Board
-            </button>
-          </div>
-        )}
+          )}
+          {shareUser.userId !== 'classboard' && (
+            <div className="col-md-2">
+              <button className="btn btn-danger" onClick={handleClearCanvas}>
+                Clear Board
+              </button>
+            </div>
+          )}
 
-        {(shareUser.userId !== 'classboard') && (
-          <div className="col-md-2">
-            <button className="btn btn-danger" onClick={handleExitMeeting}>
-              {user.host ? 'End Meeting' : 'Exit Meeting'}
-            </button>
-          </div>
-        )}
+          {shareUser.userId !== 'classboard' && (
+            <div className="col-md-2">
+              <button className="btn btn-danger" onClick={handleExitMeeting}>
+                {user.host ? 'End Meeting' : 'Exit Meeting'}
+              </button>
+            </div>
+          )}
 
-        {user?.presenter && users.length > 1 && (
-          <div className="col-md-2">
-            <button
-              className="btn btn-primary"
-              onClick={() => setOpenModal(true)}
-            >
-              Create Group
-            </button>
-          </div>
+          {user?.presenter && users.length > 1 && (
+            <div className="col-md-2">
+              <button
+                className="btn btn-primary"
+                onClick={() => setOpenModal(true)}
+              >
+                Create Group
+              </button>
+            </div>
+          )}
+        </div>
+        {shareUser.userId === 'classboard' ? (
+          <ClassBoard
+            user={user}
+            socket={socket}
+            setShareBoardName={setShareBoardName}
+          />
+        ) : showWhiteBoard() ? (
+          <WhiteBoard
+            canvasRef={canvasRef}
+            ctxRef={ctxRef}
+            tool={tool}
+            color={color}
+            user={user}
+            socket={socket}
+            screenShareId={screenShareId}
+            screenShareName={screenShareName}
+            isBoardCleared={isBoardCleared}
+            setIsBoardCleared={setIsBoardCleared}
+          />
+        ) : (
+          <ShareBoard
+            canvasRef={sharedCanvasRef}
+            ctxRef={sharedCtxRef}
+            tool={tool}
+            color={color}
+            user={user}
+            socket={socket}
+            shareUser={shareUser}
+          />
         )}
-      </div>
-      {  shareUser.userId === 'classboard' ? (
-        <ClassBoard
-         user={user}
-         socket={socket}
-         setShareBoardName={setShareBoardName}
-        />
-      ) :
-      showWhiteBoard() ? (
-        <WhiteBoard
-          canvasRef={canvasRef}
-          ctxRef={ctxRef}
-          tool={tool}
-          color={color}
-          user={user}
-          socket={socket}
-          screenShareId={screenShareId}
-          screenShareName={screenShareName}
-          isBoardCleared={isBoardCleared}
-          setIsBoardCleared={setIsBoardCleared}
-        />
-      ) 
-      : (
-        <ShareBoard
-          canvasRef={sharedCanvasRef}
-          ctxRef={sharedCtxRef}
-          tool={tool}
-          color={color}
-          user={user}
-          socket={socket}
-          shareUser={shareUser}
-        />
-      ) 
-    }
-      {canOpenModal() && (
-        <CreateGroupModal
-          sendGroupCreationEvent={sendGroupCreationEvent}
-          closeModal={closeModal}
-          users={users}
-          user={user}
-        />
-      )}
+        {canOpenModal() && (
+          <CreateGroupModal
+            sendGroupCreationEvent={sendGroupCreationEvent}
+            closeModal={closeModal}
+            users={users}
+            user={user}
+          />
+        )}
       </div>
     </Stack>
   );
