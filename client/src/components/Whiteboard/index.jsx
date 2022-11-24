@@ -24,6 +24,7 @@ const WhiteBoard = ({
 
   useEffect(() => {
     setElements([]);
+    setUserImage(null)
   }, [isBoardCleared]);
 
   useEffect(() => {

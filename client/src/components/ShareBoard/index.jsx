@@ -72,7 +72,7 @@ const ShareBoard = ({
 
       socket.emit('whiteboardData', {
         imgurl: canvasImage,
-        uid: user.userId,
+        uid: shareUser.userId,
         roomId: user.roomId
       });
       if (shareUser.isGroup === false) {

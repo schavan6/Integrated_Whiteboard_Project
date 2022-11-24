@@ -24,12 +24,11 @@ const RoomPage = ({ user, socket, users }) => {
   const ctxRef = useRef(null);
   const sharedCanvasRef = useRef(null);
   const sharedCtxRef = useRef(null);
-  const [elements, setElements] = useState([]);
   const [sharedElements, setSharedElements] = useState([]);
   const [groupElements, setGroupElements] = useState([]);
   const [openedUserTab, setOpenedUserTab] = useState(false);
   const [isBoardCleared, setIsBoardCleared] = useState(false);
-  const [shareUser, setShareUser] = useState(user);
+  const [shareUser, setShareUser] = useState(user.host ? user : {userId: 'classboard', name: 'Class Board'});
   const [shareId, setShareId] = useState(null);
   const [shareName, setShareName] = useState('Instructor');
   const [openModal, setOpenModal] = useState(false);
@@ -100,7 +99,6 @@ const RoomPage = ({ user, socket, users }) => {
     const ctx = canvas.getContext('2d');
     ctx.fillRect = 'white';
     ctx.clearRect(0, 0, canvasRef.current.width, canvasRef.current.height);
-    setElements([]);
     setIsBoardCleared(true);
     socket.emit('whiteboardData', {
       imgurl: null,
@@ -213,7 +211,7 @@ const RoomPage = ({ user, socket, users }) => {
               </div>
             </div>
           )}
-          {shareUser.userId !== 'classboard' && (
+          {shareUser.userId === user.userId && (
             <div className="col-md-2">
               <button className="btn btn-danger" onClick={handleClearCanvas}>
                 Clear Board
@@ -229,7 +227,7 @@ const RoomPage = ({ user, socket, users }) => {
             </div>
           )}
 
-          {user?.presenter && users.length > 1 && (
+          {user?.presenter && users.length > 1 && shareUser.userId !== 'classboard' && (
             <div className="col-md-2">
               <button
                 className="btn btn-primary"
