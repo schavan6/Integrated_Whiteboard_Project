@@ -39,7 +39,7 @@ const ClassBoard = ({
       className="border border-dark border-3 overflow-hidden"
       sx={{ maxHeight: '700px' }}
       src={(shareId !== null && imageMap !== null) ? imageMap.get(shareId) : null}
-      alt="share board"
+      alt="class board"
     />
   );
 };

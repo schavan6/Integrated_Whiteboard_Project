@@ -61,7 +61,7 @@ export default function Video(props) {
           className="my-2 w-100"
           onClick={() => onNameClick({userId: 'classboard', name: 'Class Board'})}
         >
-          Share Board
+          Class Board
         </p>
         <Grid item xs={gridSpacing}>
           <AgoraVideoPlayer
